@@ -10,15 +10,15 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "output_tokens": 5,
-      "ttft_ms": 226.46,
-      "tpot_ms": 208.17,
-      "throughput_tok_per_sec": 4.72,
+      "ttft_ms": 390.63,
+      "tpot_ms": 364.28,
+      "throughput_tok_per_sec": 2.71,
       "per_step_latency_ms": [
-        226.46,
-        197.54,
-        226.2,
-        208.63,
-        200.32
+        390.63,
+        360.26,
+        352.75,
+        335.69,
+        408.4
       ]
     },
     {
@@ -26,15 +26,15 @@
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "output_tokens": 5,
-      "ttft_ms": 225.44,
-      "tpot_ms": 197.26,
-      "throughput_tok_per_sec": 4.93,
+      "ttft_ms": 495.37,
+      "tpot_ms": 359.6,
+      "throughput_tok_per_sec": 2.58,
       "per_step_latency_ms": [
-        225.44,
-        185.35,
-        198.17,
-        200.6,
-        204.92
+        495.37,
+        363.02,
+        371.28,
+        335.57,
+        368.53
       ]
     },
     {
@@ -42,15 +42,15 @@
       "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
       "input_tokens": 23,
       "output_tokens": 5,
-      "ttft_ms": 281.03,
-      "tpot_ms": 229.12,
-      "throughput_tok_per_sec": 4.17,
+      "ttft_ms": 458.25,
+      "tpot_ms": 399.46,
+      "throughput_tok_per_sec": 2.43,
       "per_step_latency_ms": [
-        281.03,
-        229.85,
-        233.38,
-        229.67,
-        223.59
+        458.25,
+        382.54,
+        383.51,
+        388.01,
+        443.78
       ]
     }
   ]
