@@ -7,12 +7,24 @@ Canonical conditions shared with all other phases:
   - 10 timed runs per prompt; reports mean, p50, p99
   - Raw per-run data logged to benchmarks/results/phase2_raw.json
 
-This phase uses our custom KV-cache (src/cached_generate.py backed by
-transformers.DynamicCache). Each decoding step reuses the cached KV tensors
-from previous steps, so attention cost is O(1) per new token rather than
-O(n^2). Per-step latency stays flat -- contrasting with the quadratic
-growth visible in Phase 1.
+What MicroInfer contributes (src/cached_generate.py):
+  - Explicit two-phase Prefill/Decode separation with independent
+    CUDA-synchronised TTFT and TPOT timers.
+  - Manual DynamicCache lifecycle management (instantiate once per sequence,
+    pass through each forward call) — equivalent to how a production serving
+    engine manages its own cache object per sequence slot.
+  - Structured per-step latency collection for downstream plotting.
+
+What HuggingFace provides:
+  - DynamicCache: the actual K/V tensor storage (a Python list of per-layer
+    CUDA tensor pairs that grows one step at a time).
+  - The attention kernel that reads those tensors during each forward call.
+
+Each decoding step reuses cached K/V tensors from previous steps, so attention
+cost is O(1) per new token rather than O(N^2). Per-step latency stays flat --
+contrasting with the quadratic growth visible in Phase 1.
 """
+
 
 import sys
 import json

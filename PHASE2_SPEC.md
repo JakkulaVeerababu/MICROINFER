@@ -40,21 +40,20 @@ flowchart LR
 
 ---
 
-### Sub-Phase 2.2: Attention Layer Hooking & Incremental Generator (`src/cached_generate.py`)
-- **Objective:** Implement a 2-phase generation loop: **Prefill Phase** (processes full prompt) and **Decode Phase** (processes 1 token per step).
-- **Key Algorithmic Steps:**
+### Sub-Phase 2.2: Two-Phase Incremental Generator (`src/cached_generate.py`)
+- **Objective:** Implement a 2-phase generation loop — **Prefill Phase** (full prompt, one forward pass) and **Decode Phase** (one token per step) — with independent CUDA-synchronised TTFT and TPOT timers.
+- **Implementation Note:** The actual K/V tensor storage is provided by HuggingFace's `DynamicCache`, which is instantiated once per sequence and passed into each `model()` forward call via `use_cache=True`. MicroInfer's contribution is the **explicit two-phase control loop and measurement infrastructure** around that cache, not the attention kernel or the K/V tensors themselves.
+- **Key Steps:**
   1. **Prefill Phase (Step 0):**
-     - Pass prompt tokens $X_{1 \dots L}$ through model.
-     - Store initial $K_{1 \dots L}$ and $V_{1 \dots L}$ projections into `KVCache`.
-     - Advance cache position by $L$.
+     - Pass full prompt tokens $X_{1 \dots L}$ through model with an empty `DynamicCache`.
+     - DynamicCache is populated by HF with $K_{1 \dots L}$ and $V_{1 \dots L}$ projections.
+     - TTFT is measured via wall-clock timer synchronised to CUDA stream.
   2. **Decode Phase (Steps $1 \dots N$):**
      - Pass **only** single token $X_{i}$ (shape `(1, 1)`) to model forward pass.
-     - Compute new Key $k_i$ and Value $v_i$ projections.
-     - Append $k_i, v_i$ to cache via `update(layer_idx, new_k, new_v)`.
-     - Compute multi-head attention: $\text{Softmax}\left(\frac{q_i \cdot K_{1 \dots i}^T}{\sqrt{d_k}}\right) V_{1 \dots i}$.
-     - Select next token ID via greedy argmax.
-     - Set `current_input = next_token`.
-- **Deliverable:** Modular `src/cached_generate.py`.
+     - HF reads cached K/V from DynamicCache; no re-computation of prior tokens.
+     - New $k_i, v_i$ are appended by HF internally; DynamicCache grows by one step.
+     - Next token selected via greedy argmax; TPOT is measured per step.
+- **Deliverable:** Modular `src/cached_generate.py` with full in-file attribution of MicroInfer vs. HuggingFace responsibilities.
 
 ---
 
@@ -93,7 +92,7 @@ flowchart LR
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
 | **2.1** | KV-Cache Class | `src/kv_cache.py` | Complete |
-| **2.2** | Cached Generator Loop | `src/cached_generate.py` | Complete |
+| **2.2** | Two-Phase Generator Loop + Timers | `src/cached_generate.py` | Complete |
 | **2.3** | Correctness Test Suite | `tests/test_cached_generate.py` | Complete |
 | **2.4** | Linear Speedup Harness | `benchmarks/benchmark_cached.py` | Complete |
 | **2.5** | Master Table Logging | `README.md` | Complete |

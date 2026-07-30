@@ -15,9 +15,11 @@
 
 ## Technical Features & Framing (Interview Defense)
 
-1. **Pre-allocated KV-Cache Store (`src/kv_cache.py` & `src/cached_generate.py`):**
-   - Implements a custom pre-allocated 5D key-value CUDA tensor store (`KVCache`) in `src/kv_cache.py`.
-   - **Interface Realism:** Interfaced with HuggingFace models via HuggingFace's `DynamicCache` infrastructure in `cached_generate.py` to eliminate $O(N^2)$ re-computation and achieve flat $O(1)$ decoding step latencies.
+1. **KV-Cache Store & Two-Phase Generation Loop (`src/kv_cache.py` + `src/cached_generate.py`):**
+   - `src/kv_cache.py` implements a custom pre-allocated 5D CUDA tensor store (`KVCache`) — owns memory up front with no Python-list growth.
+   - `src/cached_generate.py` implements a **two-phase Prefill/Decode loop** with independent CUDA-synchronised TTFT and TPOT timers. Actual K/V tensor storage in this loop is via HuggingFace's `DynamicCache` (passed via `use_cache=True`); the contribution is the explicit loop control, cache lifecycle management, and measurement infrastructure — equivalent to the sequence-slot management layer in a production serving engine.
+   - *Open engineering question:* wiring `KVCache` directly into each attention layer (monkey-patching `Qwen2Attention.forward()`) would replace DynamicCache entirely; documented as a next step in `PHASE2_SPEC.md`.
+
 2. **Dynamic Request Scheduler & Queue Engine (`src/scheduler.py`):**
    - Implements an iteration-level request queue scheduler managing `SequenceState` lifecycles (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`).
    - **Interface Realism:** Manages dynamic in-flight request admission and completed request eviction. *Note for reviewers: Sequentially processes active sequences per step; tensor-level batch stacking across concurrent sequences is documented as a future kernel optimization.*
