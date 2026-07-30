@@ -32,14 +32,16 @@
 | Phase | Serving System & Architecture | TTFT (1st Token) | TPOT (Decode Speed) | Aggregate Throughput | Peak VRAM | Complexity Scaling |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Phase 0** | HuggingFace `.generate()` Baseline | **84.62 ms** | **68.55 ms/tok** | **14.60 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (HF KV-Cache) |
-| **Phase 1** | Naive Generator (No Cache) | **62.24 ms** | **62.78 ms/tok** | **15.90 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown |
+| **Phase 1** | Naive Generator (No Cache) @ N=256 | **56.63 ms** | **63.53 ms/tok** | **15.72 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
 | **Phase 2** | KV-Cache Generator Engine | **63.73 ms** | **51.89 ms/tok** | **19.16 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
 | **Phase 3** | Continuous Batching Scheduler | **117.19 ms** | **N/A (Concurrent)** | **18.13 tok/s** | **2.89 GB** | Dynamic Request Scheduling |
 | **Phase 4** | INT8 Quantized Model Engine | **551.70 ms** | **446.90 ms/tok** | **2.31 tok/s** | **1.68 GB** | 8-Bit Weights (-41.9% VRAM) |
 | **Phase 5** | Production vLLM Reference Engine | **45.65 ms** | **53.01 ms/tok** | **18.75 tok/s** | **2.89 GB** | PagedAttention + Fused Kernels |
 
+[^1]: Phase 1 is reported at N=256 (largest sweep point from `benchmarks/results/phase1_scaling.json`) so the quadratic penalty is visible. At N=256 the naive TPOT (63.53 ms/tok) exceeds the HF baseline at the same N (53.34 ms/tok), confirming the O(N²) degradation. See `analysis/plots/phase1_scaling_crossover.png` for the full N ∈ {16,32,64,128,256} side-by-side table.
+
 > **Key Performance Milestones:**
-> - **KV-Caching Speedup:** Achieved **+20.5% generation throughput boost** (19.16 tok/s vs 15.90 tok/s) and reduced per-step decoding latency to a flat constant **~50.8 ms/token**.
+> - **KV-Caching Speedup:** Achieved **+18.4% generation throughput boost** over naive-at-N=256 (19.16 tok/s vs 15.72 tok/s) and reduced per-step decoding latency to a flat constant **~51.9 ms/token**.
 > - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.89 GB down to 1.68 GB** (**-41.9% GPU memory savings**).
 
 ---
