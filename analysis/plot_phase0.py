@@ -21,10 +21,13 @@ def plot_phase0_baseline():
     plots_dir = Path(__file__).parent / "plots"
     plots_dir.mkdir(exist_ok=True, parents=True)
 
+    def _val(x):
+        return x.get("mean", 0.0) if isinstance(x, dict) else float(x)
+
     scenarios = data["results"]
     prompt_labels = [f"Prompt {sc['prompt_idx']}\n({sc['input_tokens']} tok)" for sc in scenarios]
-    ttft_vals = [sc["ttft_ms"] for sc in scenarios]
-    tpot_vals = [sc["tpot_ms"] for sc in scenarios]
+    ttft_vals = [_val(sc["ttft_ms"]) for sc in scenarios]
+    tpot_vals = [_val(sc["tpot_ms"]) for sc in scenarios]
 
     fig, ax1 = plt.subplots(figsize=(9, 5))
 

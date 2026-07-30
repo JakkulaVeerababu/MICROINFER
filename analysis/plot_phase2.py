@@ -25,10 +25,12 @@ def plot_phase2_comparisons():
     plots_dir = Path(__file__).parent / "plots"
     plots_dir.mkdir(exist_ok=True, parents=True)
 
-    # 1. Bar Chart: Throughput Comparison (Phase 1 Naive vs Phase 2 KV-Cache)
+    def _val(x):
+        return x.get("mean", 0.0) if isinstance(x, dict) else float(x)
+
     labels = [f"Scenario {i+1}" for i in range(len(p1_data["results"]))]
-    p1_tp = [sc["throughput_tok_per_sec"] for sc in p1_data["results"]]
-    p2_tp = [sc["throughput_tok_per_sec"] for sc in p2_data["results"]]
+    p1_tp = [_val(sc["throughput_tok_per_sec"]) for sc in p1_data["results"]]
+    p2_tp = [_val(sc["throughput_tok_per_sec"]) for sc in p2_data["results"]]
 
     x = range(len(labels))
     width = 0.35

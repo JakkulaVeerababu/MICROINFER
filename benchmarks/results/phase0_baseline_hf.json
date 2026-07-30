@@ -3,6 +3,9 @@
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "max_new_tokens": 10,
+  "num_warmup_runs": 3,
+  "num_timed_runs": 1,
   "peak_vram_gb": 2.89,
   "results": [
     {
@@ -10,27 +13,63 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "output_tokens": 10,
-      "ttft_ms": 112.2,
-      "tpot_ms": 93.5,
-      "throughput_tok_per_sec": 10.7
+      "ttft_ms": {
+        "mean": 101.4,
+        "p50": 101.4,
+        "p99": 101.4
+      },
+      "tpot_ms": {
+        "mean": 74.83,
+        "p50": 74.83,
+        "p99": 74.83
+      },
+      "throughput_tok_per_sec": {
+        "mean": 13.36,
+        "p50": 13.36,
+        "p99": 13.36
+      }
     },
     {
       "prompt_idx": 2,
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "output_tokens": 10,
-      "ttft_ms": 105.45,
-      "tpot_ms": 99.41,
-      "throughput_tok_per_sec": 10.06
+      "ttft_ms": {
+        "mean": 81.36,
+        "p50": 81.36,
+        "p99": 81.36
+      },
+      "tpot_ms": {
+        "mean": 73.03,
+        "p50": 73.03,
+        "p99": 73.03
+      },
+      "throughput_tok_per_sec": {
+        "mean": 13.69,
+        "p50": 13.69,
+        "p99": 13.69
+      }
     },
     {
       "prompt_idx": 3,
       "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
       "input_tokens": 23,
       "output_tokens": 10,
-      "ttft_ms": 146.11,
-      "tpot_ms": 86.05,
-      "throughput_tok_per_sec": 11.62
+      "ttft_ms": {
+        "mean": 107.44,
+        "p50": 107.44,
+        "p99": 107.44
+      },
+      "tpot_ms": {
+        "mean": 74.98,
+        "p50": 74.98,
+        "p99": 74.98
+      },
+      "throughput_tok_per_sec": {
+        "mean": 13.34,
+        "p50": 13.34,
+        "p99": 13.34
+      }
     }
   ]
 }

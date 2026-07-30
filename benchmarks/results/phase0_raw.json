@@ -1,0 +1,29 @@
+{
+  "phase": "Phase 0 - HuggingFace Baseline",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "max_new_tokens": 10,
+  "num_warmup_runs": 3,
+  "raw_runs": [
+    {
+      "prompt_idx": 1,
+      "run": 1,
+      "ttft_ms": 101.405,
+      "tpot_ms": 74.828,
+      "throughput_tok_per_sec": 13.364
+    },
+    {
+      "prompt_idx": 2,
+      "run": 1,
+      "ttft_ms": 81.36,
+      "tpot_ms": 73.029,
+      "throughput_tok_per_sec": 13.693
+    },
+    {
+      "prompt_idx": 3,
+      "run": 1,
+      "ttft_ms": 107.439,
+      "tpot_ms": 74.979,
+      "throughput_tok_per_sec": 13.337
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "phase": "Phase 5 - Production Reference Engine",
+  "engine": "reference-engine (no vLLM)",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "max_new_tokens": 5,
+  "concurrent_requests_per_wave": 2,
+  "num_warmup": 3,
+  "raw_requests": [
+    {
+      "wave": 1,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 5,
+      "ttft_ms": 79.55,
+      "total_latency_ms": 352.95
+    },
+    {
+      "wave": 1,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 5,
+      "ttft_ms": 82.11,
+      "total_latency_ms": 365.3
+    }
+  ]
+}

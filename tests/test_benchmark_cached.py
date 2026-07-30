@@ -1,5 +1,6 @@
 """
-MicroInfer - Unit Tests for Sub-Phase 2.4 Cached Generator Benchmarking Harness
+MicroInfer - Unit Tests for Phase 2 Cached Generator Benchmarking Harness
+Updated to match the new multi-run, mean/p50/p99 output schema.
 """
 
 import sys
@@ -8,7 +9,6 @@ import pytest
 import torch
 from pathlib import Path
 
-# Ensure project root is in Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from benchmarks.benchmark_cached import run_cached_benchmark, TEST_PROMPTS
@@ -37,6 +37,11 @@ def test_cached_benchmark_execution():
         assert "per_step_latency_ms" in sc
         assert len(sc["per_step_latency_ms"]) == 5
         assert sc["per_step_latency_ms"][0] > 0.0
+        # Metrics are now dicts with mean/p50/p99
+        for metric in ("ttft_ms", "tpot_ms", "throughput_tok_per_sec"):
+            assert metric in sc
+            assert isinstance(sc[metric], dict), f"{metric} should be a dict"
+            assert sc[metric]["mean"] > 0.0
 
     results_file = Path(__file__).parent.parent / "benchmarks" / "results" / "phase2_cached.json"
     assert results_file.exists()

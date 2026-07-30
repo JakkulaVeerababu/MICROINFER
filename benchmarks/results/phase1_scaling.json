@@ -1,0 +1,164 @@
+{
+  "phase": "Phase 1 - Naive Generator Scaling Sweep",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "probe_prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+  "n_values": [
+    16,
+    32,
+    64,
+    128,
+    256
+  ],
+  "num_timed_runs_per_n": 5,
+  "master_table_N": 256,
+  "crossover_N": 16,
+  "scaling_rows": [
+    {
+      "N": 16,
+      "naive": {
+        "ttft_ms": {
+          "mean": 57.07,
+          "p50": 55.76,
+          "p99": 60.01
+        },
+        "tpot_ms": {
+          "mean": 58.46,
+          "p50": 58.7,
+          "p99": 59.81
+        },
+        "throughput_tok_per_sec": 17.11
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 61.31,
+          "p50": 61.89,
+          "p99": 63.78
+        },
+        "tpot_ms": {
+          "mean": 51.25,
+          "p50": 50.58,
+          "p99": 53.21
+        },
+        "throughput_tok_per_sec": 19.53
+      }
+    },
+    {
+      "N": 32,
+      "naive": {
+        "ttft_ms": {
+          "mean": 57.15,
+          "p50": 57.88,
+          "p99": 59.53
+        },
+        "tpot_ms": {
+          "mean": 58.06,
+          "p50": 57.85,
+          "p99": 59.55
+        },
+        "throughput_tok_per_sec": 17.21
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 61.21,
+          "p50": 61.57,
+          "p99": 65.55
+        },
+        "tpot_ms": {
+          "mean": 50.65,
+          "p50": 51.22,
+          "p99": 52.43
+        },
+        "throughput_tok_per_sec": 19.76
+      }
+    },
+    {
+      "N": 64,
+      "naive": {
+        "ttft_ms": {
+          "mean": 57.31,
+          "p50": 56.35,
+          "p99": 65.91
+        },
+        "tpot_ms": {
+          "mean": 57.12,
+          "p50": 57.46,
+          "p99": 58.57
+        },
+        "throughput_tok_per_sec": 17.49
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 63.09,
+          "p50": 57.24,
+          "p99": 91.1
+        },
+        "tpot_ms": {
+          "mean": 50.18,
+          "p50": 51.48,
+          "p99": 51.91
+        },
+        "throughput_tok_per_sec": 19.97
+      }
+    },
+    {
+      "N": 128,
+      "naive": {
+        "ttft_ms": {
+          "mean": 58.62,
+          "p50": 58.86,
+          "p99": 61.89
+        },
+        "tpot_ms": {
+          "mean": 58.57,
+          "p50": 58.57,
+          "p99": 59.21
+        },
+        "throughput_tok_per_sec": 17.05
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 60.09,
+          "p50": 59.09,
+          "p99": 63.16
+        },
+        "tpot_ms": {
+          "mean": 51.06,
+          "p50": 51.06,
+          "p99": 51.87
+        },
+        "throughput_tok_per_sec": 19.59
+      }
+    },
+    {
+      "N": 256,
+      "naive": {
+        "ttft_ms": {
+          "mean": 56.63,
+          "p50": 57.7,
+          "p99": 59.21
+        },
+        "tpot_ms": {
+          "mean": 63.53,
+          "p50": 62.84,
+          "p99": 65.46
+        },
+        "throughput_tok_per_sec": 15.72
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 60.16,
+          "p50": 59.95,
+          "p99": 62.77
+        },
+        "tpot_ms": {
+          "mean": 53.34,
+          "p50": 54.67,
+          "p99": 55.36
+        },
+        "throughput_tok_per_sec": 18.78
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "phase": "Phase 4 - INT8 Quantized Engine",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "max_new_tokens": 5,
+  "num_warmup_runs": 3,
+  "raw_runs": [
+    {
+      "prompt_idx": 1,
+      "run": 1,
+      "ttft_ms": 315.71,
+      "tpot_ms": 247.28,
+      "throughput_tok_per_sec": 3.83
+    },
+    {
+      "prompt_idx": 2,
+      "run": 1,
+      "ttft_ms": 322.32,
+      "tpot_ms": 251.5,
+      "throughput_tok_per_sec": 3.76
+    },
+    {
+      "prompt_idx": 3,
+      "run": 1,
+      "ttft_ms": 367.18,
+      "tpot_ms": 261.5,
+      "throughput_tok_per_sec": 3.54
+    }
+  ]
+}

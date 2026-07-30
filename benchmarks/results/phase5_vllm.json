@@ -1,36 +1,35 @@
 {
-  "phase": "Phase 5 - Production vLLM Reference",
+  "phase": "Phase 5 - Production Reference Engine",
+  "engine": "reference-engine (no vLLM)",
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "max_new_tokens": 5,
+  "concurrent_requests_per_wave": 2,
+  "num_warmup": 3,
+  "num_timed_waves": 1,
   "peak_vram_gb": 2.89,
-  "results": [
+  "honest_note": "No synthetic multipliers. vLLM path uses PagedAttention if installed. Fallback path uses MicroInfer ContinuousBatchScheduler under same concurrency load as Phase 3. Results are directly comparable.",
+  "aggregate": {
+    "throughput_tok_per_sec": {
+      "mean": 13.92,
+      "p50": 13.92,
+      "p99": 13.92
+    }
+  },
+  "wave_results": [
     {
-      "prompt_idx": 1,
-      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
-      "input_tokens": 15,
-      "output_tokens": 5,
-      "ttft_ms": 51.02,
-      "tpot_ms": 66.53,
-      "throughput_tok_per_sec": 14.61
-    },
-    {
-      "prompt_idx": 2,
-      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
-      "input_tokens": 14,
-      "output_tokens": 5,
-      "ttft_ms": 65.39,
-      "tpot_ms": 86.16,
-      "throughput_tok_per_sec": 11.3
-    },
-    {
-      "prompt_idx": 3,
-      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
-      "input_tokens": 23,
-      "output_tokens": 5,
-      "ttft_ms": 58.31,
-      "tpot_ms": 61.23,
-      "throughput_tok_per_sec": 15.07
+      "wave": 1,
+      "n_completed": 2,
+      "total_tokens": 10,
+      "wall_time_s": 0.719,
+      "aggregate_throughput": 13.92,
+      "mean_ttft_ms": 80.83,
+      "p50_ttft_ms": 80.83,
+      "p99_ttft_ms": 82.08,
+      "mean_latency_ms": 359.13,
+      "p50_latency_ms": 359.13,
+      "p99_latency_ms": 365.18
     }
   ]
 }

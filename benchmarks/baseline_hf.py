@@ -1,154 +1,203 @@
 """
-MicroInfer - Phase 0: HuggingFace Baseline Benchmarking Script
-Measures generation throughput, TTFT, TPOT, and peak VRAM using standard HuggingFace .generate().
+MicroInfer - Phase 0: HuggingFace Baseline Benchmark Harness
+
+Canonical conditions shared with all other phases:
+  - Same 3 prompts, same max_new_tokens=64
+  - 3 discarded warm-up runs before timing starts
+  - 10 timed runs per prompt; reports mean, p50, p99
+  - Raw per-run data logged to benchmarks/results/phase0_raw.json
 """
 
 import os
 import sys
 import json
 import time
-import torch
+import statistics
 from pathlib import Path
 
-# Ensure src directory is in Python path
+import torch
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.model_loader import load_model_and_tokenizer, DEFAULT_MODEL_ID
 
-
-TEST_PROMPTS = [
+# ---------------------------------------------------------------------------
+# Shared benchmark constants — identical across all six phase harnesses
+# ---------------------------------------------------------------------------
+BENCHMARK_PROMPTS = [
     "Explain how transformer attention mechanism works in simple terms for a software engineer.",
     "Write a Python function to implement quicksort with step-by-step explanations.",
     "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
 ]
+# Backward-compat alias: tests import TEST_PROMPTS
+TEST_PROMPTS = BENCHMARK_PROMPTS
+MAX_NEW_TOKENS = 64      # identical across all phases
+NUM_WARMUP_RUNS = 3      # discarded before timing
+NUM_TIMED_RUNS  = 10     # runs actually measured
+
+
+def _percentile(data: list, p: float) -> float:
+    """Return p-th percentile (0-100) of a sorted list."""
+    if not data:
+        return 0.0
+    data_sorted = sorted(data)
+    idx = (p / 100.0) * (len(data_sorted) - 1)
+    lo = int(idx)
+    hi = min(lo + 1, len(data_sorted) - 1)
+    frac = idx - lo
+    return data_sorted[lo] * (1 - frac) + data_sorted[hi] * frac
 
 
 def benchmark_hf_generate(
     model_id: str = DEFAULT_MODEL_ID,
-    max_new_tokens: int = 128,
-    num_runs: int = 3,
+    max_new_tokens: int = MAX_NEW_TOKENS,
+    num_warmup: int = NUM_WARMUP_RUNS,
+    num_timed: int = NUM_TIMED_RUNS,
+    num_runs: int = None,   # backward-compat alias for num_timed
 ):
-    """
-    Runs baseline benchmarking using HuggingFace's built-in .generate() method.
-    """
+    # Resolve backward-compat alias
+    if num_runs is not None:
+        num_timed = num_runs
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, tokenizer = load_model_and_tokenizer(model_id=model_id, device=device)
     model.eval()
 
     print("\n" + "=" * 60)
-    print(f"  MICROINFER PHASE 0: HUGGINGFACE BASELINE BENCHMARK")
-    print(f"  Model: {model_id}")
-    print(f"  Device: {device.upper()} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
-    print(f"  Target Max New Tokens: {max_new_tokens}")
+    print("  MICROINFER PHASE 0: HUGGINGFACE BASELINE BENCHMARK")
+    print(f"  Model      : {model_id}")
+    print(f"  Device     : {device.upper()} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
+    print(f"  Max Tokens : {max_new_tokens}")
+    print(f"  Warm-up    : {num_warmup} discarded runs")
+    print(f"  Timed      : {num_timed} runs  ->  mean / p50 / p99")
     print("=" * 60 + "\n")
 
-    # 1. Warm-up run (cuda kernel compilation / allocation)
-    print("[Bench] Running warm-up run (discarded)...")
-    warmup_input = tokenizer("Hello, world!", return_tensors="pt").to(device)
-    with torch.no_grad():
-        _ = model.generate(**warmup_input, max_new_tokens=10)
+    # -----------------------------------------------------------------------
+    # Warm-up: run with a real prompt so CUDA graph capture, cuBLAS
+    # workspace sizing, and memory allocation all stabilise.
+    # -----------------------------------------------------------------------
+    print(f"[Bench] Running {num_warmup} warm-up runs (discarded)...")
+    wu_input = tokenizer(BENCHMARK_PROMPTS[0], return_tensors="pt").to(device)
+    for _ in range(num_warmup):
+        with torch.no_grad():
+            _ = model.generate(**wu_input, max_new_tokens=max_new_tokens, do_sample=False)
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
     if torch.cuda.is_available():
-        torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
     print("[Bench] Warm-up complete.\n")
 
     results = []
+    all_raw_runs = []     # for raw per-run log
 
-    for prompt_idx, prompt in enumerate(TEST_PROMPTS, 1):
-        print(f"--- Scenario {prompt_idx}: Prompt Length {len(prompt.split())} words ---")
+    for prompt_idx, prompt in enumerate(BENCHMARK_PROMPTS, 1):
+        print(f"--- Prompt {prompt_idx}/{len(BENCHMARK_PROMPTS)} ---")
         prompt_inputs = tokenizer(prompt, return_tensors="pt").to(device)
-        input_length = prompt_inputs.input_ids.shape[1]
+        input_length  = prompt_inputs.input_ids.shape[1]
 
-        prompt_ttfts = []
-        prompt_tpots = []
-        prompt_throughputs = []
-        prompt_generated_texts = []
+        run_ttfts       = []
+        run_tpots       = []
+        run_throughputs = []
 
-        for run in range(num_runs):
+        for run in range(num_timed):
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            
-            t_start = time.perf_counter()
 
-            # First token (TTFT estimation)
+            # --- TTFT: time to first token ---
+            t0 = time.perf_counter()
             with torch.no_grad():
-                first_output = model.generate(**prompt_inputs, max_new_tokens=1, min_new_tokens=1)
-            
+                _ = model.generate(**prompt_inputs, max_new_tokens=1, min_new_tokens=1, do_sample=False)
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            t_first = time.perf_counter()
-            ttft_ms = (t_first - t_start) * 1000.0
+            ttft_ms = (time.perf_counter() - t0) * 1000.0
 
-            # Rest of tokens
-            t_gen_start = time.perf_counter()
+            # --- Full generation (TPOT + throughput) ---
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            t1 = time.perf_counter()
             with torch.no_grad():
                 full_output = model.generate(
                     **prompt_inputs,
                     max_new_tokens=max_new_tokens,
-                    do_sample=False,  # Greedy decoding for consistent benchmarks
+                    do_sample=False,
                 )
             if torch.cuda.is_available():
                 torch.cuda.synchronize()
-            t_gen_end = time.perf_counter()
+            gen_time_s     = time.perf_counter() - t1
+            gen_tokens     = full_output.shape[1] - input_length
+            tpot_ms        = (gen_time_s / gen_tokens * 1000.0) if gen_tokens > 0 else 0.0
+            throughput_tps = gen_tokens / gen_time_s if gen_time_s > 0 else 0.0
 
-            total_gen_time = t_gen_end - t_gen_start
-            generated_tokens = full_output.shape[1] - input_length
-            
-            tpot_ms = (total_gen_time / generated_tokens) * 1000.0 if generated_tokens > 0 else 0
-            tokens_per_sec = generated_tokens / total_gen_time if total_gen_time > 0 else 0
+            run_ttfts.append(ttft_ms)
+            run_tpots.append(tpot_ms)
+            run_throughputs.append(throughput_tps)
+            all_raw_runs.append({
+                "prompt_idx": prompt_idx,
+                "run": run + 1,
+                "ttft_ms": round(ttft_ms, 3),
+                "tpot_ms": round(tpot_ms, 3),
+                "throughput_tok_per_sec": round(throughput_tps, 3),
+            })
 
-            prompt_ttfts.append(ttft_ms)
-            prompt_tpots.append(tpot_ms)
-            prompt_throughputs.append(tokens_per_sec)
+        mean_ttft  = statistics.mean(run_ttfts)
+        p50_ttft   = _percentile(run_ttfts, 50)
+        p99_ttft   = _percentile(run_ttfts, 99)
+        mean_tpot  = statistics.mean(run_tpots)
+        p50_tpot   = _percentile(run_tpots, 50)
+        p99_tpot   = _percentile(run_tpots, 99)
+        mean_tp    = statistics.mean(run_throughputs)
+        p50_tp     = _percentile(run_throughputs, 50)
+        p99_tp     = _percentile(run_throughputs, 99)
 
-            if run == num_runs - 1:
-                decoded = tokenizer.decode(full_output[0][input_length:], skip_special_tokens=True)
-                prompt_generated_texts.append(decoded[:100] + "...")
-
-        avg_ttft = sum(prompt_ttfts) / len(prompt_ttfts)
-        avg_tpot = sum(prompt_tpots) / len(prompt_tpots)
-        avg_throughput = sum(prompt_throughputs) / len(prompt_throughputs)
-
-        print(f"  Input Tokens:  {input_length}")
+        print(f"  Input Tokens : {input_length}")
         print(f"  Output Tokens: {max_new_tokens}")
-        print(f"  TTFT:          {avg_ttft:.2f} ms")
-        print(f"  TPOT:          {avg_tpot:.2f} ms/token")
-        print(f"  Throughput:    {avg_throughput:.2f} tokens/sec")
-        print(f"  Sample Text:   \"{prompt_generated_texts[-1]}\"\n")
+        print(f"  TTFT          mean={mean_ttft:.1f}ms  p50={p50_ttft:.1f}ms  p99={p99_ttft:.1f}ms")
+        print(f"  TPOT          mean={mean_tpot:.2f}ms  p50={p50_tpot:.2f}ms  p99={p99_tpot:.2f}ms")
+        print(f"  Throughput    mean={mean_tp:.2f} t/s  p50={p50_tp:.2f} t/s  p99={p99_tp:.2f} t/s\n")
 
         results.append({
             "prompt_idx": prompt_idx,
             "prompt": prompt,
             "input_tokens": input_length,
             "output_tokens": max_new_tokens,
-            "ttft_ms": round(avg_ttft, 2),
-            "tpot_ms": round(avg_tpot, 2),
-            "throughput_tok_per_sec": round(avg_throughput, 2),
+            "ttft_ms":  {"mean": round(mean_ttft,2), "p50": round(p50_ttft,2), "p99": round(p99_ttft,2)},
+            "tpot_ms":  {"mean": round(mean_tpot,2), "p50": round(p50_tpot,2), "p99": round(p99_tpot,2)},
+            "throughput_tok_per_sec": {"mean": round(mean_tp,2), "p50": round(p50_tp,2), "p99": round(p99_tp,2)},
         })
 
     peak_vram_gb = 0.0
     if torch.cuda.is_available():
         peak_vram_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
-        print(f"Peak VRAM Usage across all runs: {peak_vram_gb:.2f} GB")
+        print(f"Peak VRAM: {peak_vram_gb:.2f} GB")
 
-    # Export results
     output_dir = Path(__file__).parent / "results"
     output_dir.mkdir(exist_ok=True, parents=True)
-    out_file = output_dir / "phase0_baseline_hf.json"
 
     export_data = {
         "phase": "Phase 0 - HuggingFace Baseline",
         "model_id": model_id,
         "device": device,
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
+        "max_new_tokens": max_new_tokens,
+        "num_warmup_runs": num_warmup,
+        "num_timed_runs": num_timed,
         "peak_vram_gb": round(peak_vram_gb, 2),
         "results": results,
     }
-
-    with open(out_file, "w") as f:
+    with open(output_dir / "phase0_baseline_hf.json", "w") as f:
         json.dump(export_data, f, indent=2)
 
-    print(f"\n[MicroInfer] Phase 0 Baseline metrics saved to '{out_file}'.")
+    raw_export = {
+        "phase": "Phase 0 - HuggingFace Baseline",
+        "model_id": model_id,
+        "max_new_tokens": max_new_tokens,
+        "num_warmup_runs": num_warmup,
+        "raw_runs": all_raw_runs,
+    }
+    with open(output_dir / "phase0_raw.json", "w") as f:
+        json.dump(raw_export, f, indent=2)
+
+    print(f"\n[MicroInfer] Phase 0 results -> '{output_dir / 'phase0_baseline_hf.json'}'")
+    print(f"[MicroInfer] Phase 0 raw log -> '{output_dir / 'phase0_raw.json'}'")
     return export_data
 
 

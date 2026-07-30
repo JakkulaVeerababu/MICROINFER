@@ -27,20 +27,32 @@ def load_model_and_tokenizer(
     Returns:
         tuple: (model, tokenizer)
     """
-    print(f"[MicroInfer] Loading tokenizer for '{model_id}'...")
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    except Exception:
+        tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True, local_files_only=True)
+
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     print(f"[MicroInfer] Loading model '{model_id}' on {device} ({torch_dtype})...")
     start_time = time.perf_counter()
     
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        dtype=torch_dtype,
-        device_map=device,
-        trust_remote_code=True,
-    )
+    try:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            dtype=torch_dtype,
+            device_map=device,
+            trust_remote_code=True,
+        )
+    except Exception:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            dtype=torch_dtype,
+            device_map=device,
+            trust_remote_code=True,
+            local_files_only=True,
+        )
     model.eval()
     
     load_time = time.perf_counter() - start_time

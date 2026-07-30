@@ -1,0 +1,29 @@
+{
+  "phase": "Phase 1 - Naive Generator (Uncached)",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "max_new_tokens": 5,
+  "num_warmup_runs": 3,
+  "raw_runs": [
+    {
+      "prompt_idx": 1,
+      "run": 1,
+      "ttft_ms": 94.12,
+      "tpot_ms": 94.18,
+      "throughput_tok_per_sec": 10.6
+    },
+    {
+      "prompt_idx": 2,
+      "run": 1,
+      "ttft_ms": 94.16,
+      "tpot_ms": 90.95,
+      "throughput_tok_per_sec": 10.9
+    },
+    {
+      "prompt_idx": 3,
+      "run": 1,
+      "ttft_ms": 110.38,
+      "tpot_ms": 97.0,
+      "throughput_tok_per_sec": 10.02
+    }
+  ]
+}

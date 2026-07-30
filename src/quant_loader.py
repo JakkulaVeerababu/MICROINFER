@@ -20,8 +20,10 @@ def load_quantized_model_and_tokenizer(
     """
     Loads target LLM with INT8 quantized weight precision.
     """
-    print(f"\n[MicroInfer] Loading tokenizer for '{model_id}'...")
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    except Exception:
+        tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True, local_files_only=True)
 
     print(f"[MicroInfer] Loading 8-bit quantized model '{model_id}' on {device}...")
     t_start = time.time()
@@ -32,27 +34,54 @@ def load_quantized_model_and_tokenizer(
                 load_in_8bit=True,
                 llm_int8_threshold=6.0,
             )
-            model = AutoModelForCausalLM.from_pretrained(
-                model_id,
-                quantization_config=quantization_config,
-                device_map="auto",
-                trust_remote_code=True,
-            )
+            try:
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    quantization_config=quantization_config,
+                    device_map="auto",
+                    trust_remote_code=True,
+                )
+            except Exception:
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    quantization_config=quantization_config,
+                    device_map="auto",
+                    trust_remote_code=True,
+                    local_files_only=True,
+                )
         except Exception as e:
             print(f"[Warning] bitsandbytes 8-bit config failed ({e}). Falling back to FP16 half precision.")
+            try:
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    torch_dtype=torch.float16,
+                    device_map="auto",
+                    trust_remote_code=True,
+                )
+            except Exception:
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    torch_dtype=torch.float16,
+                    device_map="auto",
+                    trust_remote_code=True,
+                    local_files_only=True,
+                )
+    else:
+        try:
             model = AutoModelForCausalLM.from_pretrained(
                 model_id,
-                torch_dtype=torch.float16,
-                device_map="auto",
+                torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                device_map=device if device != "cuda" else "auto",
                 trust_remote_code=True,
             )
-    else:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id,
-            torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-            device_map=device if device != "cuda" else "auto",
-            trust_remote_code=True,
-        )
+        except Exception:
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+                device_map=device if device != "cuda" else "auto",
+                trust_remote_code=True,
+                local_files_only=True,
+            )
 
     t_elapsed = time.time() - t_start
     print(f"[MicroInfer] Quantized model loaded successfully in {t_elapsed:.2f}s.")

@@ -3,6 +3,9 @@
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "max_new_tokens": 5,
+  "num_warmup_runs": 3,
+  "num_timed_runs": 1,
   "peak_vram_gb": 1.68,
   "results": [
     {
@@ -10,15 +13,27 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "output_tokens": 5,
-      "ttft_ms": 390.63,
-      "tpot_ms": 364.28,
-      "throughput_tok_per_sec": 2.71,
+      "ttft_ms": {
+        "mean": 315.71,
+        "p50": 315.71,
+        "p99": 315.71
+      },
+      "tpot_ms": {
+        "mean": 247.28,
+        "p50": 247.28,
+        "p99": 247.28
+      },
+      "throughput_tok_per_sec": {
+        "mean": 3.83,
+        "p50": 3.83,
+        "p99": 3.83
+      },
       "per_step_latency_ms": [
-        390.63,
-        360.26,
-        352.75,
-        335.69,
-        408.4
+        315.71,
+        242.5,
+        245.96,
+        239.58,
+        261.06
       ]
     },
     {
@@ -26,15 +41,27 @@
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "output_tokens": 5,
-      "ttft_ms": 495.37,
-      "tpot_ms": 359.6,
-      "throughput_tok_per_sec": 2.58,
+      "ttft_ms": {
+        "mean": 322.32,
+        "p50": 322.32,
+        "p99": 322.32
+      },
+      "tpot_ms": {
+        "mean": 251.5,
+        "p50": 251.5,
+        "p99": 251.5
+      },
+      "throughput_tok_per_sec": {
+        "mean": 3.76,
+        "p50": 3.76,
+        "p99": 3.76
+      },
       "per_step_latency_ms": [
-        495.37,
-        363.02,
-        371.28,
-        335.57,
-        368.53
+        322.32,
+        255.13,
+        254.54,
+        242.82,
+        253.53
       ]
     },
     {
@@ -42,15 +69,27 @@
       "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
       "input_tokens": 23,
       "output_tokens": 5,
-      "ttft_ms": 458.25,
-      "tpot_ms": 399.46,
-      "throughput_tok_per_sec": 2.43,
+      "ttft_ms": {
+        "mean": 367.18,
+        "p50": 367.18,
+        "p99": 367.18
+      },
+      "tpot_ms": {
+        "mean": 261.5,
+        "p50": 261.5,
+        "p99": 261.5
+      },
+      "throughput_tok_per_sec": {
+        "mean": 3.54,
+        "p50": 3.54,
+        "p99": 3.54
+      },
       "per_step_latency_ms": [
-        458.25,
-        382.54,
-        383.51,
-        388.01,
-        443.78
+        367.18,
+        267.4,
+        262.43,
+        273.52,
+        242.65
       ]
     }
   ]

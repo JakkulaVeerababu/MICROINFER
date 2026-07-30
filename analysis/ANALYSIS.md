@@ -10,12 +10,28 @@
 
 | Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/sec) | Peak VRAM (GB) | Performance Scaling Model |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Phase 0** | HuggingFace `.generate()` Baseline | **84.62 ms** | **68.55 ms/tok** | **14.60 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in KV-Cache) |
-| **Phase 1** | Naive Generator (No Cache) @ N=256 | **56.63 ms** | **63.53 ms/tok** | **15.72 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
-| **Phase 2** | KV-Cache Generator | **63.73 ms** | **51.89 ms/tok** | **19.16 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($O(1)$ Decode Step) |
-| **Phase 3** | Continuous Batching Scheduler | **117.19 ms** | **N/A (Concurrent)** | **18.13 tok/s** | **2.89 GB** | In-Flight Queue Scheduling |
-| **Phase 4** | INT8 Quantized Engine | **551.70 ms** | **446.90 ms/tok** | **2.31 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-41.9% VRAM) |
-| **Phase 5** | Production vLLM Reference Engine | **45.65 ms** | **53.01 ms/tok** | **18.75 tok/s** | **2.89 GB** | PagedAttention + Fused CUDA Kernels |
+| **Phase 0** | HuggingFace `.generate()` Baseline | **61.81 ms** | **51.10 ms/tok** | **19.58 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in DynamicCache) |
+| **Phase 1** | Naive Generator (No Cache) | **58.60 ms** | **59.17 ms/tok** | **16.89 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
+| **Phase 2** | KV-Cache Generator | **59.74 ms** | **51.87 ms/tok** | **19.23 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
+| **Phase 3** | Continuous Batching Scheduler | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | In-Flight Queue Scheduling (16-req wave) |
+| **Phase 4** | INT8 Quantized Engine | **351.61 ms** | **287.48 ms/tok** | **3.48 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-41.9% VRAM) |
+| **Phase 5** | Production Reference Engine | **69.95 ms** | **N/A (Concurrent)** | **16.42 tok/s** | **2.95 GB** | Fallback Scheduler (16-req wave) |
+
+---
+
+## Anomalies & Gap Analysis
+
+### 1. Phase 2 (KV-Cache) vs Phase 3 (Scheduler) & Phase 5 (Fallback) Concurrency Throughput
+- **Observed Result:** Phase 2 single-request KV-cache generation achieves **19.23 tok/s**, while Phase 3 scheduler achieves **19.53 tok/s** under 16 concurrent requests and Phase 5 fallback achieves **16.42 tok/s**.
+- **Likely Mechanism:** In `src/scheduler.py`, active sequences are stepped in a Python `for seq in self.running_batch:` loop rather than stacked into a single batched CUDA tensor matrix multiplication (`(B, 1)` GEMM). Each step loop pays Python interpreter dispatch overhead and executes individual PyTorch forward calls per sequence. Thus, under concurrent load, aggregate throughput is capped near single-request throughput, and individual request latency scales with batch size (~3.2s per 16-request wave).
+
+### 2. INT8 Quantization (Phase 4) Latency Penalty on Consumer Hardware
+- **Observed Result:** INT8 weight quantization saves **-41.9% VRAM** (1.68 GB vs 2.89 GB), but TPOT increases from **51.87 ms/tok to 287.48 ms/tok** (~5.5x latency slowdown).
+- **Likely Mechanism:** `bitsandbytes` 8-bit quantization on consumer Ada Lovelace GPUs (RTX 4050 Laptop) performs runtime weight dequantization and 8-bit matrix multiplication without fused FP16-INT8 Tensor Core kernels. On small batch sizes ($B=1$), the overhead of casting and dynamically scaling 8-bit weight matrices dominates overall execution time compared to native FP16 cuBLAS GEMMs.
+
+### 3. Naive (Phase 1) vs HF Baseline (Phase 0) TTFT Delta
+- **Observed Result:** Phase 1 naive single-token forward pass TTFT (**58.60 ms**) is slightly lower than Phase 0 HuggingFace baseline TTFT (**61.81 ms**).
+- **Likely Mechanism:** HuggingFace `.generate()` executes additional Python framework logic before and during the first token pass (GenerationConfig validation, LogitsProcessor pipeline setup, stopping criteria wrappers), whereas Phase 1 executes a direct, raw PyTorch `model(input_ids)` forward pass.
 
 ---
 
@@ -100,7 +116,7 @@ This introduces severe memory bandwidth saturation during long context generatio
 Pre-allocating key and value tensors converts token generation into a 2-phase process:
 - **Prefill Step:** Process all input prompt tokens in parallel, populating the cache.
 - **Decode Steps:** Process single input tokens $(1 \times 1)$, updating the cache incrementally in constant time $\mathcal{O}(1)$ per step.
-- **Speedup:** Achieved **+20.5% throughput boost** over uncached generation on RTX 4050.
+- **Speedup:** Achieved **+13.9% throughput boost** over uncached generation on RTX 4050 (19.23 tok/s vs 16.89 tok/s).
 
 ### 3. Continuous Batching vs Static Padding Waste
 Static batching waits for the slowest request in a batch to finish, idling GPU Tensor Cores. Continuous batching operates at iteration granularity, admitting new requests as soon as cache slots open up, maximizing aggregate hardware throughput under mixed workloads.

@@ -1,6 +1,7 @@
 """
 MicroInfer - Phase 5 Completion Test Suite
-Verifies all Phase 5 code files, artifacts, test suites, master JSON outputs, and plot images.
+Verifies all Phase 5 code files, artifacts, test suites, JSON outputs, and plot images.
+Updated to match the new concurrent-wave output schema.
 """
 
 import sys
@@ -8,7 +9,6 @@ import json
 import pytest
 from pathlib import Path
 
-# Ensure project root is in Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
@@ -30,8 +30,24 @@ def test_phase5_artifacts_exist():
 
     with open(results_file, "r") as f:
         data = json.load(f)
-    assert data["phase"] == "Phase 5 - Production vLLM Reference"
-    assert len(data["results"]) == 3
+
+    # New phase string (removed "vLLM Reference" to be engine-agnostic)
+    assert data["phase"] == "Phase 5 - Production Reference Engine", (
+        f"Unexpected phase string: {data['phase']!r}. "
+        "Re-run `python benchmarks/baseline_vllm.py` to regenerate the results file."
+    )
+
+    # New schema: wave_results list instead of the old flat "results" key
+    assert "wave_results" in data, (
+        "Expected 'wave_results' key in phase5_vllm.json. "
+        "Re-run `python benchmarks/baseline_vllm.py` to regenerate it."
+    )
+    assert len(data["wave_results"]) >= 1
+    assert data["wave_results"][0]["n_completed"] >= 1
+
+    # aggregate throughput must be present and positive
+    assert "aggregate" in data
+    assert data["aggregate"]["throughput_tok_per_sec"]["mean"] > 0.0
 
     # 3. Master Plot Chart Files
     chart1 = root / "analysis" / "plots" / "master_throughput_comparison.png"

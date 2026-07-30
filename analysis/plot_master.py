@@ -25,13 +25,16 @@ def plot_master_comparisons():
     # 1. Master Bar Chart: Throughput across all engines
     phases = ["P0: HF Baseline", "P1: Uncached", "P2: KV-Cache", "P3: Continuous", "P4: INT8 Quant", "P5: vLLM Ref"]
     
+    def _val(x):
+        return x.get("mean", 0.0) if isinstance(x, dict) else float(x)
+
     # Calculate avg throughput per phase
-    p0_tp = sum(r["throughput_tok_per_sec"] for r in p0["results"]) / len(p0["results"])
-    p1_tp = sum(r["throughput_tok_per_sec"] for r in p1["results"]) / len(p1["results"])
-    p2_tp = sum(r["throughput_tok_per_sec"] for r in p2["results"]) / len(p2["results"])
-    p3_tp = p3["aggregate_throughput_tok_per_sec"]
-    p4_tp = sum(r["throughput_tok_per_sec"] for r in p4["results"]) / len(p4["results"])
-    p5_tp = sum(r["throughput_tok_per_sec"] for r in p5["results"]) / len(p5["results"])
+    p0_tp = sum(_val(r["throughput_tok_per_sec"]) for r in p0["results"]) / len(p0["results"])
+    p1_tp = sum(_val(r["throughput_tok_per_sec"]) for r in p1["results"]) / len(p1["results"])
+    p2_tp = sum(_val(r["throughput_tok_per_sec"]) for r in p2["results"]) / len(p2["results"])
+    p3_tp = _val(p3.get("aggregate", {}).get("throughput_tok_per_sec", p3.get("aggregate_throughput_tok_per_sec", 0)))
+    p4_tp = sum(_val(r["throughput_tok_per_sec"]) for r in p4["results"]) / len(p4["results"])
+    p5_tp = _val(p5.get("aggregate", {}).get("throughput_tok_per_sec", p5.get("aggregate_throughput_tok_per_sec", 0)))
 
     throughputs = [p0_tp, p1_tp, p2_tp, p3_tp, p4_tp, p5_tp]
     colors = ["#95a5a6", "#e74c3c", "#2ecc71", "#9b59b6", "#e67e22", "#16a085"]

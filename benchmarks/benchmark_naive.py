@@ -59,9 +59,8 @@ NUM_TIMED_RUNS  = 10
 
 # Sequence lengths required by PHASE1_SPEC.md to surface O(N^2) scaling
 SCALING_N_VALUES = [16, 32, 64, 128, 256]
-# Timed runs per (N, engine) pair in the scaling sweep -- kept lower than
-# the canonical run count because the full sweep is already expensive.
-SCALING_TIMED_RUNS = 5
+# Timed runs per (N, engine) pair in the scaling sweep
+SCALING_TIMED_RUNS = 10
 
 
 def _percentile(data: list, p: float) -> float:
