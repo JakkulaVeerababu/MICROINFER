@@ -162,5 +162,24 @@ python benchmarks/baseline_vllm.py
 
 ---
 
-## Live GitHub Repository
-[https://github.com/JakkulaVeerababu/MICROINFER](https://github.com/JakkulaVeerababu/MICROINFER)
+## 💼 Target Roles & Target Engineering Teams
+
+MicroInfer is engineered as an elite systems portfolio demonstrating deep expertise in LLM serving infrastructure, GPU memory dynamics, and low-level PyTorch/CUDA execution.
+
+I am **actively seeking opportunities** in:
+- **LLM Inference & Serving Infrastructure Engineering**
+- **MLSys & High-Performance GPU Kernel Engineering**
+- **AI Infrastructure & Production Platform Teams**
+
+### Target Organizations:
+- **LLM Serving Pioneers:** Anyscale (vLLM team), Fireworks.ai, Together AI, Groq, Modal, Replicate, Baseten, Lepton AI.
+- **AI Hardware & Accelerators:** NVIDIA (TensorRT-LLM team), AMD, Cerebras, Tenstorrent, SambaNova.
+- **Frontier AI Labs & Cloud:** Google DeepMind, Meta AI (PyTorch/ExecuTorch), OpenAI, Anthropic, AWS, Azure AI, Apple (MLX team).
+
+---
+
+## Live GitHub Repository & Author
+- **Author:** Jakkula Veerababu  
+- **Repository:** [https://github.com/JakkulaVeerababu/MICROINFER](https://github.com/JakkulaVeerababu/MICROINFER)  
+- **License:** MIT License
+
