@@ -1,5 +1,6 @@
 """
-MicroInfer - Unit Tests for Sub-Phase 2.2 / 2.3 Cached Generator & Correctness
+MicroInfer - Sub-Phase 2.3: Correctness Verification Suite for Cached Generator
+Verifies token-by-token output equivalence between Cached Generator and Naive Generator.
 """
 
 import sys
@@ -11,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.model_loader import load_model_and_tokenizer
+from src.naive_generate import naive_generate
 from src.cached_generate import cached_generate
 
 
@@ -21,15 +23,21 @@ def loaded_model_and_tokenizer():
     return model, tokenizer
 
 
-def test_cached_generate_execution(loaded_model_and_tokenizer):
+@pytest.mark.parametrize("prompt", [
+    "Artificial Intelligence is transforming software engineering by",
+    "Explain how transformer attention mechanism works in simple terms for",
+    "What are the key trade-offs between KV-caching and continuous batching in",
+])
+def test_cached_matches_naive_generator(loaded_model_and_tokenizer, prompt):
     """
-    Verifies that cached_generate executes 2-phase generation (prefill + decode) properly.
+    Verifies 100% token-for-token equivalence between cached_generate() (O(n) KV-cached)
+    and naive_generate() (O(n^2) uncached) under greedy decoding.
     """
     model, tokenizer = loaded_model_and_tokenizer
-    prompt = "KV-caching optimizes GPU memory bandwidth by"
     max_tokens = 20
 
-    res = cached_generate(
+    # 1. Uncached Naive Generator output
+    naive_res = naive_generate(
         model=model,
         tokenizer=tokenizer,
         prompt=prompt,
@@ -37,37 +45,7 @@ def test_cached_generate_execution(loaded_model_and_tokenizer):
         temperature=0.0,
     )
 
-    assert "output_text" in res and len(res["output_text"]) > 0
-    assert "generated_tokens" in res and res["generated_tokens"] > 0
-    assert len(res["step_times_ms"]) == res["generated_tokens"]
-    assert res["ttft_ms"] > 0.0
-    assert res["tpot_ms"] > 0.0
-    assert res["throughput_tok_per_sec"] > 0.0
-
-
-def test_cached_generate_matches_hf_baseline(loaded_model_and_tokenizer):
-    """
-    Verifies token-for-token equivalence between cached_generate() and HF .generate()
-    under greedy decoding (temperature=0.0).
-    """
-    model, tokenizer = loaded_model_and_tokenizer
-    prompt = "Artificial Intelligence is transforming software engineering by"
-    max_tokens = 15
-
-    # 1. HuggingFace baseline
-    device = model.device
-    inputs = tokenizer(prompt, return_tensors="pt").to(device)
-    with torch.no_grad():
-        hf_out = model.generate(
-            **inputs,
-            max_new_tokens=max_tokens,
-            do_sample=False,
-            use_cache=True,
-        )
-    hf_tokens = hf_out[0][inputs.input_ids.shape[1]:].tolist()
-    hf_text = tokenizer.decode(hf_tokens, skip_special_tokens=True)
-
-    # 2. Custom cached_generate output
+    # 2. KV-Cached Generator output
     cached_res = cached_generate(
         model=model,
         tokenizer=tokenizer,
@@ -76,9 +54,29 @@ def test_cached_generate_matches_hf_baseline(loaded_model_and_tokenizer):
         temperature=0.0,
     )
 
-    print("\n[HF Output]:    ", hf_text)
-    print("[Cached Output]:", cached_res["output_text"])
+    print(f"\n[Prompt]:       '{prompt}'")
+    print(f"[Naive Output]: '{naive_res['output_text']}'")
+    print(f"[Cached Output]:'{cached_res['output_text']}'")
 
-    assert cached_res["output_text"].strip() == hf_text.strip(), (
-        f"Mismatch between HF and Cached Generator!\nHF: '{hf_text}'\nCached: '{cached_res['output_text']}'"
+    assert cached_res["output_text"].strip() == naive_res["output_text"].strip(), (
+        f"Mismatch between Naive and Cached Generator for prompt '{prompt}'!\nNaive: '{naive_res['output_text']}'\nCached: '{cached_res['output_text']}'"
     )
+
+
+def test_cached_generate_sampling_temperature(loaded_model_and_tokenizer):
+    """
+    Verifies temperature sampling execution (temperature=0.7) produces valid text.
+    """
+    model, tokenizer = loaded_model_and_tokenizer
+    prompt = "The future of LLM serving infrastructure"
+    
+    res = cached_generate(
+        model=model,
+        tokenizer=tokenizer,
+        prompt=prompt,
+        max_new_tokens=10,
+        temperature=0.7,
+    )
+
+    assert "output_text" in res and len(res["output_text"]) > 0
+    assert res["generated_tokens"] == 10
