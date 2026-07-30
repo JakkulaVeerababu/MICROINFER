@@ -1,6 +1,14 @@
 """
-MicroInfer - Phase 3: Continuous Batching Scheduler Module
-Implements in-flight request lifecycle management, dynamic queue scheduling, and batched execution.
+MicroInfer - Phase 3: Dynamic Request Scheduler with Lifecycle Management Module
+
+Implements iteration-granularity request lifecycle management, dynamic queue
+scheduling (WAITING -> RUNNING -> FINISHED), and multi-sequence stepping.
+
+Architecture Note:
+Active sequences are stepped in an iteration loop per step to maintain per-sequence
+KV-cache independence. True tensor-level batching across concurrent sequences
+requires restructuring the forward pass to stack (B, T) inputs — this is a
+documented next step.
 """
 
 import time
@@ -40,7 +48,7 @@ class Sequence:
 
 class ContinuousBatchScheduler:
     """
-    In-flight continuous batch scheduler managing concurrent requests across WAITING, RUNNING, and FINISHED states.
+    In-flight request scheduler managing concurrent requests across WAITING, RUNNING, and FINISHED states.
     """
 
     def __init__(

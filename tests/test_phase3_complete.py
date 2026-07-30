@@ -30,7 +30,7 @@ def test_phase3_artifacts_exist():
 
     with open(results_file, "r") as f:
         data = json.load(f)
-    assert data["phase"] == "Phase 3 - Continuous Batching Scheduler"
+    assert data["phase"] == "Phase 3 - Dynamic Request Scheduler with Lifecycle Management"
 
     # New schema: wave_results list instead of the old flat "requests" key
     assert "wave_results" in data, (

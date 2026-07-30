@@ -27,7 +27,7 @@ def test_scheduler_benchmark_execution():
         num_waves=1,
     )
 
-    assert results_data["phase"] == "Phase 3 - Continuous Batching Scheduler"
+    assert results_data["phase"] == "Phase 3 - Dynamic Request Scheduler with Lifecycle Management"
     assert "peak_vram_gb" in results_data
     assert results_data["peak_vram_gb"] > 0.0
 

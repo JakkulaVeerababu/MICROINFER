@@ -1,7 +1,7 @@
-# MicroInfer Specification — Phase 3: Continuous Batching Scheduler
+# MicroInfer Specification — Phase 3: Dynamic Request Scheduler with Lifecycle Management
 
 > **Target Hardware:** NVIDIA GeForce RTX 4050 Laptop GPU (6GB VRAM, CUDA 12.1)  
-> **Primary Goal:** Implement an in-flight **Continuous Batching Scheduler** that dynamically admits new incoming generation requests and evicts completed sequences on every generation step, eliminating static batch padding waste and maximizing GPU Tensor Core utilization.
+> **Primary Goal:** Implement an in-flight **Dynamic Request Scheduler with Lifecycle Management** that dynamically admits new incoming generation requests (`WAITING` $\to$ `RUNNING`) and evicts completed sequences (`FINISHED`) on every generation step, managing request queue lifecycles without static batch padding waste.
 
 ---
 
@@ -38,13 +38,13 @@ flowchart LR
 
 ---
 
-### Sub-Phase 3.2: Batched Tensor Forward-Pass Execution Engine
-- **Objective:** Implement step-level iteration: admission, batched forward tensor execution, and eviction.
+### Sub-Phase 3.2: Iteration-Granularity Step Execution Engine
+- **Objective:** Implement step-level iteration: admission, per-sequence forward step execution, and eviction.
 - **Key Algorithmic Step (`scheduler.step(model)`):**
   1. **Admission:** If `len(running_batch) < max_batch_size` and `waiting_queue` has requests, pop request, allocate cache slot, set `state = RUNNING`, add to `running_batch`.
-  2. **Batched Execution:** Stack current input token IDs of all active sequences into batch tensor `(B, 1)`. Run single `model(batched_inputs)` call.
-  3. **Unstacking & Eviction:** Sample next token for each sequence. If token is EOS or reached `max_new_tokens`, set `state = FINISHED`, free cache slot, and remove from `running_batch`.
-- **Deliverable:** Batched execution engine in `src/scheduler.py`.
+  2. **Step Execution:** Iterate through active running sequences. *Architecture Note:* Active sequences are stepped sequentially in Python to maintain per-sequence KV-cache independence. True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack $(B, T)$ inputs — this is a documented next step.
+  3. **Eviction:** Sample next token for each sequence. If token is EOS or reached `max_new_tokens`, set `state = FINISHED`, free cache slot, and remove from `running_batch`.
+- **Deliverable:** Queue execution engine in `src/scheduler.py`.
 
 ---
 

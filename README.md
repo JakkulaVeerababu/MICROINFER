@@ -9,7 +9,7 @@
 [![PyTest 33 Passed](https://img.shields.io/badge/PyTest-33%2F33%20Passed-2ecc71?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org)
 [![License MIT](https://img.shields.io/badge/License-MIT-blue.style=flat-square)](LICENSE)
 
-**MicroInfer** is a high-performance transformer serving engine engineered from first principles to implement, profile, and benchmark core LLM serving algorithms: **Pre-allocated Key-Value (KV) Caching**, **In-Flight Continuous Batching Scheduling**, and **8-Bit INT8 Weight Quantization**.
+**MicroInfer** is a high-performance transformer serving engine engineered from first principles to implement, profile, and benchmark core LLM serving algorithms: **Pre-allocated Key-Value (KV) Caching**, **Dynamic Request Scheduler with Lifecycle Management**, and **8-Bit INT8 Weight Quantization**.
 
 ---
 
@@ -36,7 +36,7 @@
 | **Phase 0** | HuggingFace `.generate()` Baseline | **61.81 ms** | **51.10 ms/tok** | **19.58 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (HF DynamicCache) |
 | **Phase 1** | Naive Generator (No Cache) | **58.60 ms** | **59.17 ms/tok** | **16.89 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
 | **Phase 2** | KV-Cache Generator Engine | **59.74 ms** | **51.87 ms/tok** | **19.23 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Continuous Batching Scheduler | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | Dynamic Request Scheduling (16-req wave) |
+| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | Dynamic Request Scheduling (16-req wave) |
 | **Phase 4** | INT8 Quantized Model Engine | **351.61 ms** | **287.48 ms/tok** | **3.48 tok/s** | **1.68 GB** | 8-Bit Weights (-41.9% VRAM) |
 | **Phase 5** | Production Reference Engine | **69.95 ms** | **N/A (Concurrent)** | **16.42 tok/s** | **2.95 GB** | Fallback Scheduler (16-req wave) |
 
@@ -58,7 +58,7 @@
 | :---: | :---: |
 | ![Phase 1 Scaling](analysis/plots/phase1_quadratic_scaling.png) | ![Phase 2 Latency](analysis/plots/phase2_flat_step_latency.png) |
 
-| Phase 3 Continuous Batching | Phase 4 VRAM Reduction |
+| Phase 3 Dynamic Request Scheduler | Phase 4 VRAM Reduction |
 | :---: | :---: |
 | ![Phase 3 Batching](analysis/plots/phase3_scheduler_performance.png) | ![Phase 4 VRAM](analysis/plots/phase4_vram_reduction.png) |
 
@@ -84,7 +84,7 @@ MICROINFER/
 │   ├── naive_generate.py               # Phase 1 Uncached Naive Generator (O(N^2) complexity)
 │   ├── kv_cache.py                     # Phase 2 Pre-allocated KV-Cache Tensor Store
 │   ├── cached_generate.py              # Phase 2 2-Phase Incremental Generator (O(1) step)
-│   ├── scheduler.py                    # Phase 3 Continuous Batching Scheduler & Queue Engine
+│   ├── scheduler.py                    # Phase 3 Dynamic Request Scheduler with Lifecycle Management
 │   ├── quant_loader.py                 # Phase 4 8-Bit Quantized Weight Model Loader
 │   └── quant_generate.py               # Phase 4 INT8 Quantized Generator Engine
 │
@@ -138,7 +138,7 @@ python benchmarks/baseline_hf.py
 # Run Phase 2 KV-Cache Benchmark
 python benchmarks/benchmark_cached.py
 
-# Run Phase 3 Continuous Batching Benchmark
+# Run Phase 3 Dynamic Request Scheduler Benchmark
 python benchmarks/benchmark_scheduler.py
 
 # Run Phase 4 INT8 Quantized Benchmark

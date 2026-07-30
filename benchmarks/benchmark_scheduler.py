@@ -211,7 +211,7 @@ def run_scheduler_benchmark(
     output_dir.mkdir(exist_ok=True, parents=True)
 
     export_data = {
-        "phase": "Phase 3 - Continuous Batching Scheduler",
+        "phase": "Phase 3 - Dynamic Request Scheduler with Lifecycle Management",
         "model_id": model_id,
         "device": device,
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",
@@ -221,10 +221,10 @@ def run_scheduler_benchmark(
         "num_timed_waves": num_waves,
         "peak_vram_gb": round(peak_vram_gb, 2),
         "honest_note": (
-            "Scheduler executes requests sequentially inside step(). "
-            "Aggregate throughput reflects queue management efficiency, "
-            "not batched-tensor GPU execution. "
-            "Phase 2 single-request throughput may exceed this; that is expected."
+            "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). "
+            "Active sequences are stepped in an iteration loop. "
+            "True tensor-level batching across concurrent sequences requires "
+            "restructuring the forward pass to stack (B, T) inputs — this is a documented next step."
         ),
         "aggregate": {
             "throughput_tok_per_sec": {"mean": round(mean_tp,2), "p50": round(p50_tp,2), "p99": round(p99_tp,2)},
@@ -252,7 +252,7 @@ def run_scheduler_benchmark(
         json.dump(export_data, f, indent=2)
 
     raw_export = {
-        "phase": "Phase 3 - Continuous Batching Scheduler",
+        "phase": "Phase 3 - Dynamic Request Scheduler with Lifecycle Management",
         "model_id": model_id,
         "max_new_tokens": max_new_tokens,
         "concurrent_requests_per_wave": concurrent_requests,

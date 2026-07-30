@@ -1,5 +1,5 @@
 {
-  "phase": "Phase 3 - Continuous Batching Scheduler",
+  "phase": "Phase 3 - Dynamic Request Scheduler with Lifecycle Management",
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
@@ -8,7 +8,7 @@
   "num_warmup_waves": 1,
   "num_timed_waves": 1,
   "peak_vram_gb": 2.89,
-  "honest_note": "Scheduler executes requests sequentially inside step(). Aggregate throughput reflects queue management efficiency, not batched-tensor GPU execution. Phase 2 single-request throughput may exceed this; that is expected.",
+  "honest_note": "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). Active sequences are stepped in an iteration loop. True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack (B, T) inputs — this is a documented next step.",
   "aggregate": {
     "throughput_tok_per_sec": {
       "mean": 15.78,

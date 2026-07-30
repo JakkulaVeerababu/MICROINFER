@@ -13,7 +13,7 @@
 | **Phase 0** | HuggingFace `.generate()` Baseline | **61.81 ms** | **51.10 ms/tok** | **19.58 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in DynamicCache) |
 | **Phase 1** | Naive Generator (No Cache) | **58.60 ms** | **59.17 ms/tok** | **16.89 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
 | **Phase 2** | KV-Cache Generator | **59.74 ms** | **51.87 ms/tok** | **19.23 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Continuous Batching Scheduler | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | In-Flight Queue Scheduling (16-req wave) |
+| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | Dynamic Request Scheduling (16-req wave) |
 | **Phase 4** | INT8 Quantized Engine | **351.61 ms** | **287.48 ms/tok** | **3.48 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-41.9% VRAM) |
 | **Phase 5** | Production Reference Engine | **69.95 ms** | **N/A (Concurrent)** | **16.42 tok/s** | **2.95 GB** | Fallback Scheduler (16-req wave) |
 
@@ -118,8 +118,10 @@ Pre-allocating key and value tensors converts token generation into a 2-phase pr
 - **Decode Steps:** Process single input tokens $(1 \times 1)$, updating the cache incrementally in constant time $\mathcal{O}(1)$ per step.
 - **Speedup:** Achieved **+13.9% throughput boost** over uncached generation on RTX 4050 (19.23 tok/s vs 16.89 tok/s).
 
-### 3. Continuous Batching vs Static Padding Waste
-Static batching waits for the slowest request in a batch to finish, idling GPU Tensor Cores. Continuous batching operates at iteration granularity, admitting new requests as soon as cache slots open up, maximizing aggregate hardware throughput under mixed workloads.
+### 3. Dynamic Request Scheduling with Lifecycle Management
+Static batching waits for the slowest request in a batch to finish, idling GPU Tensor Cores. Dynamic request scheduling operates at iteration granularity, admitting new requests as soon as sequence slots open up and evicting finished sequences immediately to manage queue lifecycles.
+
+True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack (B, T) inputs — this is a documented next step.
 
 ### 4. INT8 Quantization Trade-offs
 Weight quantization reduces memory allocation from **2.89 GB down to 1.68 GB** (**-41.9% VRAM savings**). While 8-bit dequantization adds arithmetic overhead during matrix multiplications on laptop GPUs, the saved memory enables serving double the batch size or context window.
