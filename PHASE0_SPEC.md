@@ -86,7 +86,7 @@ flowchart LR
 | **0.2** | Model Selection (Qwen 1.5B) | `PHASE0_SPEC.md` | ✅ Complete |
 | **0.3** | Model Loader Module | `src/model_loader.py` | ✅ Complete |
 | **0.4** | Baseline Benchmark Harness | `benchmarks/baseline_hf.py` | ✅ Complete |
-| **0.5** | Benchmark Results & Report | `benchmarks/results/phase0_baseline_hf.json` | ⏳ Running |
+| **0.5** | Benchmark Results & Report | `benchmarks/results/phase0_baseline_hf.json` | ✅ Complete |
 
 ---
 

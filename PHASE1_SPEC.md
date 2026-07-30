@@ -83,11 +83,11 @@ flowchart LR
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **1.1** | Uncached Generator Loop | `src/naive_generate.py` | ✅ Code Ready |
-| **1.2** | Correctness Test Suite | `tests/test_correctness.py` | ✅ Code Ready |
-| **1.3** | Latency Profiler Harness | `benchmarks/benchmark_naive.py` | ⏳ Pending |
-| **1.4** | Quadratic Data Export | `benchmarks/results/phase1_naive.json` | ⏳ Pending |
-| **1.5** | Master Table Logging | `README.md` | ⏳ Pending |
+| **1.1** | Uncached Generator Loop | `src/naive_generate.py` | ✅ Complete |
+| **1.2** | Correctness Test Suite | `tests/test_correctness.py` | ✅ Complete |
+| **1.3** | Latency Profiler Harness | `benchmarks/benchmark_naive.py` | ✅ Complete |
+| **1.4** | Quadratic Data Export | `benchmarks/results/phase1_naive.json` | ✅ Complete |
+| **1.5** | Master Table Logging | `README.md` | ✅ Complete |
 
 ---
 
