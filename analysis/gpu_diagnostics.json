@@ -1,0 +1,23 @@
+{
+  "sub_phase": "0.1 - Environment & GPU Hardware Diagnostics",
+  "python_version": "3.11.0",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "pytorch_version": "2.5.1+cu121",
+  "cuda_available": true,
+  "cuda_version": "12.1",
+  "cudnn_version": 90100,
+  "gpu_info": {
+    "name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+    "total_vram_gb": 6.0,
+    "total_vram_mb": 6140.5,
+    "multi_processor_count": 20,
+    "compute_capability": "8.9"
+  },
+  "dependencies": {
+    "transformers": "5.12.1",
+    "accelerate": "1.14.0",
+    "pytest": "9.0.2",
+    "numpy": "1.26.4",
+    "pandas": "2.1.4"
+  }
+}
