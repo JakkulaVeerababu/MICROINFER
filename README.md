@@ -48,7 +48,7 @@ microinfer/
 
 | Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/s) | Peak VRAM |
 | :--- | :--- | :---: | :---: | :---: | :---: |
-| **Phase 0** | HuggingFace `.generate()` Baseline | *TBD* | *TBD* | *TBD* | *TBD* |
+| **Phase 0** | HuggingFace `.generate()` Baseline | **84.62 ms** | **68.55 ms/tok** | **14.60 tok/s** | **2.89 GB** |
 | **Phase 1** | Naive Generator (No Cache) | *TBD* | *TBD* | *TBD* | *TBD* |
 | **Phase 2** | KV-Cache Generator | *TBD* | *TBD* | *TBD* | *TBD* |
 | **Phase 3** | Continuous Batching Scheduler | *TBD* | *TBD* | *TBD* | *TBD* |
