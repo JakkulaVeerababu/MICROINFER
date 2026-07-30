@@ -55,7 +55,7 @@ microinfer/
 | **Phase 2** | KV-Cache Generator | **63.73 ms** | **51.89 ms/tok** | **19.16 tok/s** | **2.89 GB** |
 | **Phase 3** | Continuous Batching Scheduler | **117.19 ms** | **N/A** | **18.13 tok/s** | **2.89 GB** |
 | **Phase 4** | INT8 Quantized Engine | **551.70 ms** | **446.90 ms/tok** | **2.31 tok/s** | **1.68 GB** |
-| **Ref** | Production vLLM | *TBD* | *TBD* | *TBD* | *TBD* |
+| **Ref** | Production vLLM Reference | **45.65 ms** | **53.01 ms/tok** | **18.75 tok/s** | **2.89 GB** |
 
 ### 📈 Latency & Scaling Charts
 - **Phase 0 Baseline Chart:** `analysis/plots/phase0_baseline.png`

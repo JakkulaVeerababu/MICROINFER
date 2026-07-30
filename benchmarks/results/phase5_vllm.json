@@ -1,0 +1,36 @@
+{
+  "phase": "Phase 5 - Production vLLM Reference",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "peak_vram_gb": 2.89,
+  "results": [
+    {
+      "prompt_idx": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "output_tokens": 64,
+      "ttft_ms": 47.95,
+      "tpot_ms": 54.19,
+      "throughput_tok_per_sec": 18.33
+    },
+    {
+      "prompt_idx": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "output_tokens": 64,
+      "ttft_ms": 39.38,
+      "tpot_ms": 52.21,
+      "throughput_tok_per_sec": 19.08
+    },
+    {
+      "prompt_idx": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "output_tokens": 64,
+      "ttft_ms": 49.61,
+      "tpot_ms": 52.64,
+      "throughput_tok_per_sec": 18.85
+    }
+  ]
+}

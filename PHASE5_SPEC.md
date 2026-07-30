@@ -66,8 +66,8 @@ flowchart LR
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **5.1** | vLLM Reference Benchmark | `benchmarks/baseline_vllm.py` | ⏳ Pending |
-| **5.2** | Master PyTest Suite | `tests/test_master_suite.py` | ⏳ Pending |
-| **5.3** | Master Comparative Plots | `analysis/plot_master.py` | ⏳ Pending |
-| **5.4** | MLSys Technical Whitepaper | `analysis/ANALYSIS.md` & `README.md` | ⏳ Pending |
-| **5.5** | Portfolio Release | GitHub Repository | ⏳ Pending |
+| **5.1** | vLLM Reference Benchmark | `benchmarks/baseline_vllm.py` | ✅ Complete |
+| **5.2** | Master PyTest Suite | `tests/test_master_suite.py` | ✅ Complete |
+| **5.3** | Master Comparative Plots | `analysis/plot_master.py` | ✅ Complete |
+| **5.4** | MLSys Technical Whitepaper | `analysis/ANALYSIS.md` & `README.md` | ✅ Complete |
+| **5.5** | Portfolio Release | GitHub Repository | ✅ Complete |
