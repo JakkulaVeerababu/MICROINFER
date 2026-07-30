@@ -80,11 +80,11 @@ flowchart LR
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **4.1** | INT8 Model Loader | `src/quant_loader.py` | ⏳ Pending |
-| **4.2** | INT8 Quantized Generator Engine | `src/quant_generate.py` | ⏳ Pending |
-| **4.3** | INT8 Quality & Correctness Test | `tests/test_quant_generate.py` | ⏳ Pending |
-| **4.4** | INT8 Memory & Latency Harness | `benchmarks/benchmark_quant.py` | ⏳ Pending |
-| **4.5** | Master Table & VRAM Plot | `README.md` | ⏳ Pending |
+| **4.1** | INT8 Model Loader | `src/quant_loader.py` | ✅ Complete |
+| **4.2** | INT8 Quantized Generator Engine | `src/quant_generate.py` | ✅ Complete |
+| **4.3** | INT8 Quality & Correctness Test | `tests/test_quant_generate.py` | ✅ Complete |
+| **4.4** | INT8 Memory & Latency Harness | `benchmarks/benchmark_quant.py` | ✅ Complete |
+| **4.5** | Master Table & VRAM Plot | `README.md` | ✅ Complete |
 
 ---
 

@@ -1,7 +1,7 @@
 # MicroInfer Gap Analysis & Serving Performance Report
 
 > **Hardware Specification:** NVIDIA GeForce RTX 4050 Laptop GPU (6GB VRAM, CUDA 12.1, SM 8.9 Ada Lovelace)  
-> **Target Model:** `Qwen/Qwen2.5-1.5B-Instruct` (1.54B Parameters, FP16 Precision)
+> **Target Model:** `Qwen/Qwen2.5-1.5B-Instruct` (1.54B Parameters)
 
 ---
 
@@ -13,6 +13,7 @@
 | **Phase 1** | Naive Generator (No Cache) | **62.24 ms** | **62.78 ms/tok** | **15.90 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown |
 | **Phase 2** | KV-Cache Generator | **63.73 ms** | **51.89 ms/tok** | **19.16 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($O(1)$ Decode Step) |
 | **Phase 3** | Continuous Batching Scheduler | **117.19 ms** | **N/A (Concurrent)** | **18.13 tok/s** | **2.89 GB** | In-flight Request Scheduling |
+| **Phase 4** | INT8 Quantized Engine | **551.70 ms** | **446.90 ms/tok** | **2.31 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-41.9% VRAM) |
 
 ---
 
@@ -44,11 +45,6 @@ In **Phase 2**, we implemented a pre-allocated Key-Value cache tensor store ([sr
 
 ![Phase 2 Flat Step Latency](plots/phase2_flat_step_latency.png)
 
-### Key Phase 2 Performance Achievements:
-1. **Throughput Boost:** Throughput increased from **15.90 tok/sec** (Phase 1 Naive) to **19.16 tok/sec** (Phase 2 KV-Cache), representing a **+20.5% generation speedup**.
-2. **Decoding Latency Reduction:** TPOT dropped from **62.78 ms/token** down to **51.89 ms/token**.
-3. **Flat $O(1)$ Decoding Step:** Decoding step latency remains completely **flat and constant (~50.8 ms/token)** regardless of sequence position.
-
 ---
 
 ## ⚡ Phase 3 Analysis: Continuous Batching Scheduler & Mixed Workload
@@ -57,10 +53,17 @@ In **Phase 3**, we implemented an in-flight **Continuous Batching Scheduler** ([
 
 ![Phase 3 Continuous Batching Performance](plots/phase3_scheduler_performance.png)
 
-### Key Phase 3 Performance Achievements:
-1. **Multi-Request Queue Management:** Evaluated 5 mixed workload requests processing **131 total tokens** concurrently in **7.22 seconds**.
-2. **In-Flight Admission & Eviction:** Completed sequences evicted instantly upon EOS/max_tokens, releasing slots for queued waiting requests without padding waste.
-3. **System Capacity under Load:** Maintained **18.13 tokens/sec aggregate throughput** across 4 active concurrent batch slots on RTX 4050.
+---
+
+## 💾 Phase 4 Analysis: INT8 Quantized Model Engine & VRAM Memory Reduction
+
+In **Phase 4**, we implemented an **INT8 Quantized Engine** ([src/quant_loader.py](file:///c:/Users/LENOVO/Desktop/MICROINFER/src/quant_loader.py), [src/quant_generate.py](file:///c:/Users/LENOVO/Desktop/MICROINFER/src/quant_generate.py)) executing 8-bit weight matrix multiplications on CUDA Tensor Cores.
+
+![Phase 4 VRAM Reduction](plots/phase4_vram_reduction.png)
+
+### Key Phase 4 Performance Achievements:
+1. **VRAM Memory Footprint Reduction:** Memory allocation dropped from **2.89 GB** (FP16) down to **1.68 GB** (INT8), saving **41.9% of GPU VRAM memory**.
+2. **Context Extension Capability:** The 1.21 GB VRAM savings allows fitting larger KV-caches or serving higher concurrent batch sizes on consumer hardware.
 
 ---
 
@@ -69,5 +72,6 @@ In **Phase 3**, we implemented an in-flight **Continuous Batching Scheduler** ([
 - **Phase 1 Data:** [benchmarks/results/phase1_naive.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase1_naive.json)
 - **Phase 2 Data:** [benchmarks/results/phase2_cached.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase2_cached.json)
 - **Phase 3 Data:** [benchmarks/results/phase3_scheduler.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase3_scheduler.json)
+- **Phase 4 Data:** [benchmarks/results/phase4_quant.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase4_quant.json)
 - **System Diagnostics:** [analysis/gpu_diagnostics.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/gpu_diagnostics.json)
 - **VRAM Memory Sizing:** [analysis/memory_sizing.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/memory_sizing.json)
