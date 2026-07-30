@@ -27,6 +27,24 @@
 
 ---
 
+## 🎯 Interview Defense & Implementation Transparency Guide
+
+When discussing MicroInfer in technical interviews at Tier-1 companies (OpenAI, Anthropic, Google DeepMind, Meta), use this honest, defensible framing:
+
+### 1. KV-Cache Implementation (`src/kv_cache.py` vs `src/cached_generate.py`)
+- **Honest Framing:** We built a custom pre-allocated 5D key-value CUDA tensor store (`KVCache`) in `src/kv_cache.py` to study fixed-memory cache allocation. In our generator pipeline (`cached_generate.py`), we interface with HuggingFace models using HuggingFace's `DynamicCache` infrastructure.
+- **Interview Defense:** *"In `src/kv_cache.py`, I designed a custom pre-allocated 5D tensor cache store (`[num_layers, B, num_heads, max_len, head_dim]`) to understand physical VRAM allocation. For interfacing directly with HuggingFace model forward passes, I leveraged HuggingFace's `DynamicCache` data structure, which handles cache growth while achieving our flat $O(1)$ per-step decoding performance (~50.8 ms/token)."*
+
+### 2. Request Scheduler Mechanics (`src/scheduler.py`)
+- **Honest Framing:** The scheduler in `src/scheduler.py` implements iteration-level request queue management and lifecycle tracking (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`). Active sequences are processed sequentially within each step loop.
+- **Interview Defense:** *"My scheduler implements dynamic in-flight request admission and completed sequence eviction based on sequence state tracking. To keep PyTorch code simple without writing custom Triton/CUDA batched attention kernels, active sequences are stepped in an iteration loop. Full tensor-level batch stacking across concurrent sequences is the natural next kernel-level optimization."*
+
+### 3. Quantization Tier (`src/quant_loader.py`)
+- **Honest Framing:** MicroInfer uses the `bitsandbytes` library (`load_in_8bit=True`) for 8-bit weight matrix multiplication rather than custom handwritten CUDA quantization kernels.
+- **Interview Defense:** *"I integrated `bitsandbytes` as our INT8 serving tier to profile VRAM reduction (-41.9% memory savings from 2.89 GB down to 1.68 GB) and analyze the trade-off between reduced GPU memory bandwidth and 8-bit dequantization latency on consumer GPUs."*
+
+---
+
 ## 🔬 Mechanistic Deep-Dive & Architectural Analysis
 
 ### 1. The Bottleneck of Uncached Generation ($\mathcal{O}(N^2)$ FLOP Overhead)
@@ -48,7 +66,7 @@ Weight quantization reduces memory allocation from **2.89 GB down to 1.68 GB** (
 
 ---
 
-## 💡 Tier-1 MLSys Interview Questions & System Design Answers
+## 💡 Tier-1 MLSys System Design Interview Questions & Answers
 
 ### Q1: *"Why is LLM decoding memory-bandwidth bound rather than compute bound?"*
 > **Answer:** During decoding, we execute a single-token forward pass $(B=1, T=1)$. The model must fetch all 1.5B parameters (~3GB in FP16) from VRAM to GPU SRAM to perform arithmetic over a single token. The arithmetic intensity (FLOPs / byte) is approximately 1.0, far below NVIDIA GPU saturation thresholds (~100-300 FLOPs/byte). Thus, decoding speed is strictly limited by GPU memory bandwidth (GB/s).
