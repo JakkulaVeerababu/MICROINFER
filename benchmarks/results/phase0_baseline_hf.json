@@ -10,27 +10,27 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "output_tokens": 10,
-      "ttft_ms": 83.26,
-      "tpot_ms": 69.07,
-      "throughput_tok_per_sec": 14.48
+      "ttft_ms": 68.67,
+      "tpot_ms": 53.62,
+      "throughput_tok_per_sec": 18.65
     },
     {
       "prompt_idx": 2,
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "output_tokens": 10,
-      "ttft_ms": 79.79,
-      "tpot_ms": 67.13,
-      "throughput_tok_per_sec": 14.9
+      "ttft_ms": 64.85,
+      "tpot_ms": 57.22,
+      "throughput_tok_per_sec": 17.48
     },
     {
       "prompt_idx": 3,
       "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
       "input_tokens": 23,
       "output_tokens": 10,
-      "ttft_ms": 90.8,
-      "tpot_ms": 69.45,
-      "throughput_tok_per_sec": 14.4
+      "ttft_ms": 84.13,
+      "tpot_ms": 54.05,
+      "throughput_tok_per_sec": 18.5
     }
   ]
 }
