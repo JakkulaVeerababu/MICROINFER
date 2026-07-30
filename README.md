@@ -61,7 +61,7 @@ microinfer/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/microinfer.git
+git clone https://github.com/JakkulaVeerababu/MICROINFER.git
 cd microinfer
 
 # Install dependencies
