@@ -37,7 +37,7 @@ def load_model_and_tokenizer(
     
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        torch_dtype=torch_dtype,
+        dtype=torch_dtype,
         device_map=device,
         trust_remote_code=True,
     )
