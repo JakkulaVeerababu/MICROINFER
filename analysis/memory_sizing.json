@@ -1,0 +1,60 @@
+{
+  "sub_phase": "0.2 - Model Selection & VRAM Memory Sizing",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "architectural_specs": {
+    "num_layers": 28,
+    "hidden_size": 1536,
+    "num_attention_heads": 12,
+    "num_kv_heads": 2,
+    "head_dim": 128,
+    "vocab_size": 151936,
+    "attention_mechanism": "Grouped-Query Attention (GQA)"
+  },
+  "weight_memory_gb": {
+    "fp16": 2.87,
+    "int8": 1.43
+  },
+  "kv_cache_specs": {
+    "bytes_per_token": 28672,
+    "kb_per_token": 28.0,
+    "sequence_length_matrix": {
+      "seq_256": {
+        "per_sequence_mb": 7.0,
+        "batch_8_mb": 56.0,
+        "batch_16_mb": 112.0,
+        "batch_32_mb": 224.0
+      },
+      "seq_512": {
+        "per_sequence_mb": 14.0,
+        "batch_8_mb": 112.0,
+        "batch_16_mb": 224.0,
+        "batch_32_mb": 448.0
+      },
+      "seq_1024": {
+        "per_sequence_mb": 28.0,
+        "batch_8_mb": 224.0,
+        "batch_16_mb": 448.0,
+        "batch_32_mb": 896.0
+      },
+      "seq_2048": {
+        "per_sequence_mb": 56.0,
+        "batch_8_mb": 448.0,
+        "batch_16_mb": 896.0,
+        "batch_32_mb": 1792.0
+      },
+      "seq_4096": {
+        "per_sequence_mb": 112.0,
+        "batch_8_mb": 896.0,
+        "batch_16_mb": 1792.0,
+        "batch_32_mb": 3584.0
+      }
+    }
+  },
+  "rtx_4050_vram_budget": {
+    "gpu_vram_gb": 6.0,
+    "fp16_weights_gb": 2.87,
+    "remaining_headroom_gb": 2.63,
+    "max_capacity_tokens_batch_1": 98548,
+    "max_capacity_tokens_batch_16": 6159
+  }
+}
