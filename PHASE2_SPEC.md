@@ -92,11 +92,11 @@ flowchart LR
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **2.1** | KV-Cache Class | `src/kv_cache.py` | ⏳ Pending |
-| **2.2** | Cached Generator Loop | `src/cached_generate.py` | ⏳ Pending |
-| **2.3** | Correctness Test Suite | `tests/test_cached_generate.py` | ⏳ Pending |
-| **2.4** | Linear Speedup Harness | `benchmarks/benchmark_cached.py` | ⏳ Pending |
-| **2.5** | Master Table Logging | `README.md` | ⏳ Pending |
+| **2.1** | KV-Cache Class | `src/kv_cache.py` | ✅ Complete |
+| **2.2** | Cached Generator Loop | `src/cached_generate.py` | ✅ Complete |
+| **2.3** | Correctness Test Suite | `tests/test_cached_generate.py` | ✅ Complete |
+| **2.4** | Linear Speedup Harness | `benchmarks/benchmark_cached.py` | ✅ Complete |
+| **2.5** | Master Table Logging | `README.md` | ✅ Complete |
 
 ---
 
