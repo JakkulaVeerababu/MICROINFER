@@ -172,9 +172,9 @@ I am **actively seeking opportunities** in:
 - **AI Infrastructure & Production Platform Teams**
 
 ### Target Organizations:
-- **LLM Serving Pioneers:** Anyscale (vLLM team), Fireworks.ai, Together AI, Groq, Modal, Replicate, Baseten, Lepton AI.
-- **AI Hardware & Accelerators:** NVIDIA (TensorRT-LLM team), AMD, Cerebras, Tenstorrent, SambaNova.
-- **Frontier AI Labs & Cloud:** Google DeepMind, Meta AI (PyTorch/ExecuTorch), OpenAI, Anthropic, AWS, Azure AI, Apple (MLX team).
+- **LLM Serving Pioneers:** [`vLLM Project / Anyscale`](https://github.com/vllm-project/vllm) | [`Fireworks.ai`](https://github.com/fireworks-ai) | [`Together AI`](https://github.com/togethercomputer) | [`Groq`](https://github.com/groq) | [`Modal`](https://github.com/modal-labs) | [`Replicate`](https://github.com/replicate) | [`Baseten`](https://github.com/basetenlabs) | [`Lepton AI`](https://github.com/leptonai)
+- **AI Hardware & Accelerators:** [`NVIDIA TensorRT-LLM`](https://github.com/NVIDIA/TensorRT-LLM) | [`AMD ROCm`](https://github.com/ROCm) | [`Cerebras Systems`](https://github.com/Cerebras) | [`Tenstorrent`](https://github.com/tenstorrent) | [`SambaNova`](https://github.com/sambanova)
+- **Frontier AI Labs & Cloud:** [`Google DeepMind`](https://github.com/google-deepmind) | [`Meta AI (PyTorch)`](https://github.com/pytorch/pytorch) | [`OpenAI (Triton)`](https://github.com/openai/triton) | [`Anthropic`](https://github.com/anthropics) | [`Apple (MLX)`](https://github.com/ml-explore/mlx)
 
 ---
 
