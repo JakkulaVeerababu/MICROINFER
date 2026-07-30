@@ -40,6 +40,11 @@ hf_cache/
 *.pth
 *.onnx
 
+# Document artifacts & word lock files
+*.docx
+~$*.docx
+*.pdf
+
 # IDEs & Editors
 .vscode/
 .idea/

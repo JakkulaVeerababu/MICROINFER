@@ -8,20 +8,20 @@
   "num_warmup_waves": 1,
   "num_timed_waves": 1,
   "peak_vram_gb": 2.89,
-  "honest_note": "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). Active sequences are stepped in an iteration loop. True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack (B, T) inputs — this is a documented next step.",
+  "honest_note": "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). Active sequences are stepped in an iteration loop. True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack (B, T) inputs \u2014 this is a documented next step.",
   "aggregate": {
     "throughput_tok_per_sec": {
-      "mean": 15.78,
-      "p50": 15.78,
-      "p99": 15.78
+      "mean": 18.57,
+      "p50": 18.57,
+      "p99": 18.57
     },
     "ttft_ms": {
-      "mean": 68.11
+      "mean": 76.17
     },
     "request_latency_ms": {
-      "mean": 4053.1,
-      "p50": 4053.1,
-      "p99": 4053.1
+      "mean": 3443.87,
+      "p50": 3443.87,
+      "p99": 3443.87
     }
   },
   "wave_results": [
@@ -29,14 +29,14 @@
       "wave": 1,
       "n_completed": 2,
       "total_tokens": 128,
-      "wall_time_s": 8.111,
-      "aggregate_throughput": 15.78,
-      "mean_ttft_ms": 68.11,
-      "p50_ttft_ms": 68.11,
-      "p99_ttft_ms": 71.92,
-      "mean_latency_ms": 4053.1,
-      "p50_latency_ms": 4053.1,
-      "p99_latency_ms": 4095.61
+      "wall_time_s": 6.892,
+      "aggregate_throughput": 18.57,
+      "mean_ttft_ms": 76.17,
+      "p50_ttft_ms": 76.17,
+      "p99_ttft_ms": 81.04,
+      "mean_latency_ms": 3443.87,
+      "p50_latency_ms": 3443.87,
+      "p99_latency_ms": 3452.35
     }
   ]
 }

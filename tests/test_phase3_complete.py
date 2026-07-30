@@ -19,7 +19,7 @@ def test_phase3_artifacts_exist():
     root = Path(__file__).parent.parent
 
     # 1. Spec & Code Files
-    assert (root / "PHASE3_SPEC.md").exists(), "PHASE3_SPEC.md missing"
+    assert (root / "specs" / "PHASE3_SPEC.md").exists(), "PHASE3_SPEC.md missing"
     assert (root / "src" / "scheduler.py").exists(), "src/scheduler.py missing"
     assert (root / "benchmarks" / "benchmark_scheduler.py").exists(), "benchmarks/benchmark_scheduler.py missing"
     assert (root / "analysis" / "plot_phase3.py").exists(), "analysis/plot_phase3.py missing"

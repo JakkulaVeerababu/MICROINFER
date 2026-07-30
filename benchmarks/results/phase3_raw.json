@@ -1,5 +1,5 @@
 {
-  "phase": "Phase 3 - Continuous Batching Scheduler",
+  "phase": "Phase 3 - Dynamic Request Scheduler with Lifecycle Management",
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "max_new_tokens": 64,
   "concurrent_requests_per_wave": 2,
@@ -10,8 +10,8 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "generated_tokens": 64,
-      "ttft_ms": 64.21,
-      "total_latency_ms": 4009.72,
+      "ttft_ms": 71.21,
+      "total_latency_ms": 3452.52,
       "wave": 1
     },
     {
@@ -19,8 +19,8 @@
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "generated_tokens": 64,
-      "ttft_ms": 72.0,
-      "total_latency_ms": 4096.47,
+      "ttft_ms": 81.14,
+      "total_latency_ms": 3435.21,
       "wave": 1
     }
   ]

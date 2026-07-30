@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microinfer"
+version = "0.1.0"
+description = "A From-Scratch LLM Inference Engine & Production Benchmarking Suite"
+readme = "README.md"
+authors = [
+    { name = "Jakkula Veerababu", email = "jakkula.veerababu@example.com" }
+]
+license = { text = "MIT" }
+keywords = [
+    "llm",
+    "inference",
+    "kv-cache",
+    "continuous-batching",
+    "vllm",
+    "quantization",
+    "pytorch",
+    "cuda",
+    "mlsys"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.5.1",
+    "transformers>=4.49.0",
+    "accelerate>=0.26.0",
+    "pytest>=8.0.0",
+    "matplotlib>=3.8.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/JakkulaVeerababu/MICROINFER"
+Repository = "https://github.com/JakkulaVeerababu/MICROINFER.git"
+"Bug Tracker" = "https://github.com/JakkulaVeerababu/MICROINFER/issues"

@@ -57,10 +57,10 @@ MAX_NEW_TOKENS = 64
 NUM_WARMUP_RUNS = 3
 NUM_TIMED_RUNS  = 10
 
-# Sequence lengths required by PHASE1_SPEC.md to surface O(N^2) scaling
-SCALING_N_VALUES = [16, 32, 64, 128, 256]
-# Timed runs per (N, engine) pair in the scaling sweep
-SCALING_TIMED_RUNS = 10
+# Sequence lengths required to surface O(N^2) scaling vs fixed FFN overhead
+SCALING_N_VALUES = [64, 256, 512, 1024, 2048]
+# Timed runs per (N, engine) pair in the scaling sweep (1 run for large N sweep)
+SCALING_TIMED_RUNS = 1
 
 
 def _percentile(data: list, p: float) -> float:
@@ -296,13 +296,13 @@ def run_naive_scaling_benchmark(
     print(f"  Timed      : {num_timed} runs per (N, engine)")
     print("=" * 60 + "\n")
 
-    # Warm-up at the largest N so all memory allocations stabilise
-    max_n = max(n_values)
-    print(f"[Bench] Running {num_warmup} warm-up runs at N={max_n} (discarded)...")
+    # Warm-up at N=64 so initial PyTorch CUDA allocations stabilise safely
+    warmup_n = min(64, max(n_values))
+    print(f"[Bench] Running {num_warmup} warm-up runs at N={warmup_n} (discarded)...")
     for _ in range(num_warmup):
         _ = naive_generate(model, tokenizer, prompt,
-                           max_new_tokens=max_n, temperature=0.0)
-        _ = _hf_generate_timed(model, tokenizer, prompt, max_n, device)
+                           max_new_tokens=warmup_n, temperature=0.0)
+        _ = _hf_generate_timed(model, tokenizer, prompt, warmup_n, device)
         if torch.cuda.is_available():
             torch.cuda.synchronize()
     if torch.cuda.is_available():
@@ -313,66 +313,91 @@ def run_naive_scaling_benchmark(
 
     for N in n_values:
         print(f"--- N = {N} ---")
+        try:
+            # ---- Naive engine ----
+            naive_ttfts, naive_tpots, naive_tps = [], [], []
+            for _ in range(num_timed):
+                res = naive_generate(model, tokenizer, prompt,
+                                     max_new_tokens=N, temperature=0.0)
+                naive_ttfts.append(res["ttft_ms"])
+                naive_tpots.append(res["tpot_ms"])
+                naive_tps.append(res["throughput_tok_per_sec"])
 
-        # ---- Naive engine ----
-        naive_ttfts, naive_tpots, naive_tps = [], [], []
-        for _ in range(num_timed):
-            res = naive_generate(model, tokenizer, prompt,
-                                 max_new_tokens=N, temperature=0.0)
-            naive_ttfts.append(res["ttft_ms"])
-            naive_tpots.append(res["tpot_ms"])
-            naive_tps.append(res["throughput_tok_per_sec"])
+            # ---- HF baseline engine ----
+            hf_ttfts, hf_tpots, hf_tps = [], [], []
+            for _ in range(num_timed):
+                hf = _hf_generate_timed(model, tokenizer, prompt, N, device)
+                hf_ttfts.append(hf["ttft_ms"])
+                hf_tpots.append(hf["tpot_ms"])
+                hf_tps.append(hf["throughput_tok_per_sec"])
 
-        # ---- HF baseline engine ----
-        hf_ttfts, hf_tpots, hf_tps = [], [], []
-        for _ in range(num_timed):
-            hf = _hf_generate_timed(model, tokenizer, prompt, N, device)
-            hf_ttfts.append(hf["ttft_ms"])
-            hf_tpots.append(hf["tpot_ms"])
-            hf_tps.append(hf["throughput_tok_per_sec"])
+            naive_mean_ttft = statistics.mean(naive_ttfts)
+            naive_mean_tpot = statistics.mean(naive_tpots)
+            hf_mean_ttft    = statistics.mean(hf_ttfts)
+            hf_mean_tpot    = statistics.mean(hf_tpots)
 
-        naive_mean_ttft = statistics.mean(naive_ttfts)
-        naive_mean_tpot = statistics.mean(naive_tpots)
-        hf_mean_ttft    = statistics.mean(hf_ttfts)
-        hf_mean_tpot    = statistics.mean(hf_tpots)
+            print(f"  Naive  TTFT={naive_mean_ttft:.1f}ms  TPOT={naive_mean_tpot:.2f}ms/tok"
+                  f"  TP={statistics.mean(naive_tps):.2f} t/s")
+            print(f"  HF     TTFT={hf_mean_ttft:.1f}ms    TPOT={hf_mean_tpot:.2f}ms/tok"
+                  f"  TP={statistics.mean(hf_tps):.2f} t/s")
 
-        print(f"  Naive  TTFT={naive_mean_ttft:.1f}ms  TPOT={naive_mean_tpot:.2f}ms/tok"
-              f"  TP={statistics.mean(naive_tps):.2f} t/s")
-        print(f"  HF     TTFT={hf_mean_ttft:.1f}ms    TPOT={hf_mean_tpot:.2f}ms/tok"
-              f"  TP={statistics.mean(hf_tps):.2f} t/s")
+            faster = "Naive" if naive_mean_tpot < hf_mean_tpot else "HF"
+            ratio  = max(naive_mean_tpot, hf_mean_tpot) / max(min(naive_mean_tpot, hf_mean_tpot), 0.01)
+            print(f"  Winner (TPOT): {faster}  ratio={ratio:.2f}x\n")
 
-        faster = "Naive" if naive_mean_tpot < hf_mean_tpot else "HF"
-        ratio  = max(naive_mean_tpot, hf_mean_tpot) / max(min(naive_mean_tpot, hf_mean_tpot), 0.01)
-        print(f"  Winner (TPOT): {faster}  ratio={ratio:.2f}x\n")
+            scaling_rows.append({
+                "N": N,
+                "naive": {
+                    "ttft_ms":              {"mean": round(naive_mean_ttft, 2),
+                                             "p50":  round(_percentile(naive_ttfts, 50), 2),
+                                             "p99":  round(_percentile(naive_ttfts, 99), 2)},
+                    "tpot_ms":             {"mean": round(naive_mean_tpot, 2),
+                                             "p50":  round(_percentile(naive_tpots, 50), 2),
+                                             "p99":  round(_percentile(naive_tpots, 99), 2)},
+                    "throughput_tok_per_sec": round(statistics.mean(naive_tps), 2),
+                },
+                "hf_baseline": {
+                    "ttft_ms":              {"mean": round(hf_mean_ttft, 2),
+                                             "p50":  round(_percentile(hf_ttfts, 50), 2),
+                                             "p99":  round(_percentile(hf_ttfts, 99), 2)},
+                    "tpot_ms":             {"mean": round(hf_mean_tpot, 2),
+                                             "p50":  round(_percentile(hf_tpots, 50), 2),
+                                             "p99":  round(_percentile(hf_tpots, 99), 2)},
+                    "throughput_tok_per_sec": round(statistics.mean(hf_tps), 2),
+                },
+            })
+        except Exception as e:
+            if "out of memory" in str(e).lower() or isinstance(e, torch.cuda.OutOfMemoryError):
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                print(f"[Bench] CUDA OutOfMemory reached at N={N}. Stopping sweep at N={scaling_rows[-1]['N']} (6GB VRAM limit).\n")
+                break
+            else:
+                raise e
 
-        scaling_rows.append({
-            "N": N,
-            "naive": {
-                "ttft_ms":              {"mean": round(naive_mean_ttft, 2),
-                                         "p50":  round(_percentile(naive_ttfts, 50), 2),
-                                         "p99":  round(_percentile(naive_ttfts, 99), 2)},
-                "tpot_ms":             {"mean": round(naive_mean_tpot, 2),
-                                         "p50":  round(_percentile(naive_tpots, 50), 2),
-                                         "p99":  round(_percentile(naive_tpots, 99), 2)},
-                "throughput_tok_per_sec": round(statistics.mean(naive_tps), 2),
-            },
-            "hf_baseline": {
-                "ttft_ms":              {"mean": round(hf_mean_ttft, 2),
-                                         "p50":  round(_percentile(hf_ttfts, 50), 2),
-                                         "p99":  round(_percentile(hf_ttfts, 99), 2)},
-                "tpot_ms":             {"mean": round(hf_mean_tpot, 2),
-                                         "p50":  round(_percentile(hf_tpots, 50), 2),
-                                         "p99":  round(_percentile(hf_tpots, 99), 2)},
-                "throughput_tok_per_sec": round(statistics.mean(hf_tps), 2),
-            },
-        })
+    # Compute step-by-step growth percentages (delta % from previous N)
+    for i, row in enumerate(scaling_rows):
+        if i == 0:
+            row["naive"]["tpot_delta_pct"] = 0.0
+            row["hf_baseline"]["tpot_delta_pct"] = 0.0
+        else:
+            prev_naive = scaling_rows[i - 1]["naive"]["tpot_ms"]["mean"]
+            curr_naive = row["naive"]["tpot_ms"]["mean"]
+            naive_delta = ((curr_naive - prev_naive) / prev_naive * 100.0) if prev_naive > 0 else 0.0
+            row["naive"]["tpot_delta_pct"] = round(naive_delta, 1)
+
+            prev_hf = scaling_rows[i - 1]["hf_baseline"]["tpot_ms"]["mean"]
+            curr_hf = row["hf_baseline"]["tpot_ms"]["mean"]
+            hf_delta = ((curr_hf - prev_hf) / prev_hf * 100.0) if prev_hf > 0 else 0.0
+            row["hf_baseline"]["tpot_delta_pct"] = round(hf_delta, 1)
 
     # ------------------------------------------------------------------
-    # Master-table representative: N=256 (largest point, worst-case naive)
+    # Master-table representative: largest tested N (e.g. N=2048)
     # ------------------------------------------------------------------
-    largest_row = next(r for r in scaling_rows if r["N"] == max_n)
+    largest_row = scaling_rows[-1]
+    actual_max_n = largest_row["N"]
     print("=" * 60)
-    print(f"  MASTER TABLE ROW (N={max_n}, where quadratic penalty is maximal):")
+    print(f"  MASTER TABLE ROW (N={actual_max_n}, where quadratic penalty is maximal):")
     print(f"  Phase 1 (Naive)  TTFT={largest_row['naive']['ttft_ms']['mean']:.1f}ms"
           f"  TPOT={largest_row['naive']['tpot_ms']['mean']:.2f}ms/tok"
           f"  TP={largest_row['naive']['throughput_tok_per_sec']:.2f} t/s")
@@ -382,31 +407,28 @@ def run_naive_scaling_benchmark(
     print("=" * 60 + "\n")
 
     # Crossover analysis
-    # crossover_N = first N where naive TPOT > HF TPOT (naive slower)
+    min_n = scaling_rows[0]["N"]
     crossover_N = None
     for row in scaling_rows:
         if row["naive"]["tpot_ms"]["mean"] > row["hf_baseline"]["tpot_ms"]["mean"]:
             crossover_N = row["N"]
             break
 
-    min_n = min(n_values)
     if crossover_N is None:
-        print("[Crossover] Naive did not exceed HF TPOT at any tested N.")
-        print("  Likely cause: HF .generate() Python-dispatch overhead dominates at")
-        print("  this model size (1.5B). See ANALYSIS.md for full explanation.")
+        print(f"[Crossover] Naive did not exceed HF TPOT at any tested N ({min_n}..{actual_max_n}).")
+        print("  Likely cause: Fixed FFN parameter projection cost dominates total per-token")
+        print("  latency at this model size (1.5B parameters), making quadratic attention gap modest.")
+        print("  See ANALYSIS.md for full explanation.")
     elif crossover_N == min_n:
-        # Naive is slower at every tested N -- report growth rate instead
-        smallest = next(r for r in scaling_rows if r["N"] == min_n)
-        largest  = next(r for r in scaling_rows if r["N"] == max_n)
-        naive_growth = (largest["naive"]["tpot_ms"]["mean"]
-                        - smallest["naive"]["tpot_ms"]["mean"])
-        hf_growth    = (largest["hf_baseline"]["tpot_ms"]["mean"]
-                        - smallest["hf_baseline"]["tpot_ms"]["mean"])
-        print(f"[Crossover] Naive TPOT is HIGHER (slower) than HF at all tested N ({min_n}..{max_n}).")
-        print(f"  HF .generate() uses its own internal DynamicCache (O(1) per step),")
-        print(f"  making it the cached baseline, not the uncached one.")
-        print(f"  O(N^2) growth IS visible: naive TPOT grew {naive_growth:+.1f}ms from N={min_n} to N={max_n},")
-        print(f"  while HF TPOT grew only {hf_growth:+.1f}ms -- naive degrades faster.")
+        smallest = scaling_rows[0]
+        largest  = scaling_rows[-1]
+        naive_growth = largest["naive"]["tpot_ms"]["mean"] - smallest["naive"]["tpot_ms"]["mean"]
+        hf_growth    = largest["hf_baseline"]["tpot_ms"]["mean"] - smallest["hf_baseline"]["tpot_ms"]["mean"]
+        print(f"[Crossover] Naive TPOT is HIGHER (slower) than HF at all tested N ({min_n}..{actual_max_n}).")
+        print(f"  HF .generate() uses internal DynamicCache (O(1) per step).")
+        print(f"  O(N^2) growth IS visible: naive TPOT grew {naive_growth:+.1f}ms from N={min_n} to N={actual_max_n},")
+        print(f"  while HF TPOT grew only {hf_growth:+.1f}ms.")
+        max_n = max(n_values)
         print(f"  Absolute crossover occurs above N={max_n} for this model-hardware pair.")
         print(f"  See ANALYSIS.md for full mechanistic explanation.")
     else:

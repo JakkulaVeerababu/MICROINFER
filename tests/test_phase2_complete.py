@@ -19,7 +19,7 @@ def test_phase2_artifacts_exist():
     root = Path(__file__).parent.parent
 
     # 1. Spec & Code Files
-    assert (root / "PHASE2_SPEC.md").exists(), "PHASE2_SPEC.md missing"
+    assert (root / "specs" / "PHASE2_SPEC.md").exists(), "PHASE2_SPEC.md missing"
     assert (root / "src" / "kv_cache.py").exists(), "src/kv_cache.py missing"
     assert (root / "src" / "cached_generate.py").exists(), "src/cached_generate.py missing"
     assert (root / "benchmarks" / "benchmark_cached.py").exists(), "benchmarks/benchmark_cached.py missing"

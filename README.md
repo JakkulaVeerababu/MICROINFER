@@ -153,12 +153,12 @@ python benchmarks/baseline_vllm.py
 ## Published Reports & Specifications
 
 - **MLSys Technical Whitepaper:** [analysis/ANALYSIS.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/ANALYSIS.md)  
-- **Phase 0 Spec Matrix:** [PHASE0_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE0_SPEC.md) (100% Complete)  
-- **Phase 1 Spec Matrix:** [PHASE1_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE1_SPEC.md) (100% Complete)  
-- **Phase 2 Spec Matrix:** [PHASE2_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE2_SPEC.md) (100% Complete)  
-- **Phase 3 Spec Matrix:** [PHASE3_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE3_SPEC.md) (100% Complete)  
-- **Phase 4 Spec Matrix:** [PHASE4_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE4_SPEC.md) (100% Complete)  
-- **Phase 5 Spec Matrix:** [PHASE5_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE5_SPEC.md) (100% Complete)  
+- **Phase 0 Spec Matrix:** [specs/PHASE0_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE0_SPEC.md) (100% Complete)  
+- **Phase 1 Spec Matrix:** [specs/PHASE1_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE1_SPEC.md) (100% Complete)  
+- **Phase 2 Spec Matrix:** [specs/PHASE2_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE2_SPEC.md) (100% Complete)  
+- **Phase 3 Spec Matrix:** [specs/PHASE3_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE3_SPEC.md) (100% Complete)  
+- **Phase 4 Spec Matrix:** [specs/PHASE4_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE4_SPEC.md) (100% Complete)  
+- **Phase 5 Spec Matrix:** [specs/PHASE5_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE5_SPEC.md) (100% Complete)  
 
 ---
 

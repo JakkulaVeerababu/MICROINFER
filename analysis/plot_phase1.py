@@ -170,25 +170,29 @@ def plot_phase1_crossover():
         note_line = f"Crossover at N={crossover}: naive becomes slower than HF (TPOT)"
 
     # ---------------------------------------------------------------
-    # Text table panel — side-by-side comparison at each N
+    # Text table panel — side-by-side comparison with step-by-step growth %
     # ---------------------------------------------------------------
     ax_text.set_facecolor(BG)
     ax_text.axis("off")
 
-    header = f"{'N':>5}  {'Naive TTFT':>11}  {'Naive TPOT':>11}  {'HF TTFT':>9}  {'HF TPOT':>9}  {'Winner':>7}"
+    header = f"{'N':>5} | {'Naive TPOT':>10} {'Naive Δ%':>8} | {'HF TPOT':>8} {'HF Δ%':>8} | {'Winner':>6}"
     lines  = [header, "-" * len(header)]
     for r in rows:
         nt = r["naive"]["tpot_ms"]["mean"]
         ht = r["hf_baseline"]["tpot_ms"]["mean"]
+        naive_delta = r["naive"].get("tpot_delta_pct", 0.0)
+        hf_delta    = r["hf_baseline"].get("tpot_delta_pct", 0.0)
         winner = "HF" if ht < nt else "Naive"
-        marker = " <-- master" if r["N"] == master_N else ""
+        marker = " *" if r["N"] == master_N else ""
+
+        n_delta_str = f"+{naive_delta:.1f}%" if naive_delta > 0 else (f"{naive_delta:.1f}%" if naive_delta < 0 else "--")
+        h_delta_str = f"+{hf_delta:.1f}%" if hf_delta > 0 else (f"{hf_delta:.1f}%" if hf_delta < 0 else "--")
+
         lines.append(
-            f"{r['N']:>5}  "
-            f"{r['naive']['ttft_ms']['mean']:>9.1f}ms  "
-            f"{nt:>9.2f}ms  "
-            f"{r['hf_baseline']['ttft_ms']['mean']:>7.1f}ms  "
-            f"{ht:>7.2f}ms  "
-            f"{winner:>7}{marker}"
+            f"{r['N']:>5} | "
+            f"{nt:>8.2f}ms {n_delta_str:>8} | "
+            f"{ht:>6.2f}ms {h_delta_str:>8} | "
+            f"{winner:>6}{marker}"
         )
     lines.append("")
     lines.append(note_line)
@@ -202,22 +206,24 @@ def plot_phase1_crossover():
         verticalalignment="top",
         wrap=False,
     )
-    ax_text.set_title("Side-by-Side Crossover Table", color=WHITE,
+    ax_text.set_title("Side-by-Side Growth Table", color=WHITE,
                       fontsize=11, fontweight="bold", pad=10)
 
     # Print crossover table to stdout as well
-    print("\n" + "=" * 80)
-    print(f"  {'N':>5} | {'Naive TTFT':>12} {'Naive TPOT':>12} | {'HF TTFT':>10} {'HF TPOT':>10} | {'Winner (TPOT)':>14}")
-    print("  " + "-" * 78)
+    print("\n" + "=" * 90)
+    print(f"  {'N':>5} | {'Naive TPOT':>10} {'Naive Δ%':>9} | {'HF TPOT':>10} {'HF Δ%':>9} | {'Winner (TPOT)':>14}")
+    print("  " + "-" * 88)
     for r in rows:
         nt = r["naive"]["tpot_ms"]["mean"]
         ht = r["hf_baseline"]["tpot_ms"]["mean"]
+        naive_delta = r["naive"].get("tpot_delta_pct", 0.0)
+        hf_delta    = r["hf_baseline"].get("tpot_delta_pct", 0.0)
+        n_delta_str = f"+{naive_delta:.1f}%" if naive_delta > 0 else (f"{naive_delta:.1f}%" if naive_delta < 0 else "--")
+        h_delta_str = f"+{hf_delta:.1f}%" if hf_delta > 0 else (f"{hf_delta:.1f}%" if hf_delta < 0 else "--")
         winner = "HF" if ht < nt else "Naive"
         master_tag = "  <- master table" if r["N"] == master_N else ""
-        print(f"  {r['N']:>5} | {r['naive']['ttft_ms']['mean']:>10.1f}ms"
-              f" {nt:>10.2f}ms | {r['hf_baseline']['ttft_ms']['mean']:>8.1f}ms"
-              f" {ht:>8.2f}ms | {winner:>14}{master_tag}")
-    print("=" * 80 + "\n")
+        print(f"  {r['N']:>5} | {nt:>8.2f}ms {n_delta_str:>9} | {ht:>8.2f}ms {h_delta_str:>9} | {winner:>14}{master_tag}")
+    print("=" * 90 + "\n")
     print(note_line)
 
     fig.suptitle(
