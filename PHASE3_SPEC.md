@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 Phase 3 Overview & Architecture
+## Phase 3 Overview & Architecture
 
 In production LLM serving, users send requests at different times with different prompt lengths and desired output lengths. **Static batching** waits for a fixed batch to collect, runs all sequences to completion, and leaves GPU Tensor Cores idling while shorter requests finish early. **Continuous batching** (in-flight batching) operates at the iteration step level:
 
@@ -26,9 +26,9 @@ flowchart LR
 
 ---
 
-## 🛠️ Sub-Phase Breakdown
+## Sub-Phase Breakdown
 
-### 🔹 Sub-Phase 3.1: Sequence Lifecycle & Scheduler Data Structure (`src/scheduler.py`)
+### Sub-Phase 3.1: Sequence Lifecycle & Scheduler Data Structure (`src/scheduler.py`)
 - **Objective:** Build request data structures and queue management logic.
 - **Data Structures:**
   - **`SequenceState` Enum:** `WAITING`, `RUNNING`, `FINISHED`.
@@ -38,7 +38,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 3.2: Batched Tensor Forward-Pass Execution Engine
+### Sub-Phase 3.2: Batched Tensor Forward-Pass Execution Engine
 - **Objective:** Implement step-level iteration: admission, batched forward tensor execution, and eviction.
 - **Key Algorithmic Step (`scheduler.step(model)`):**
   1. **Admission:** If `len(running_batch) < max_batch_size` and `waiting_queue` has requests, pop request, allocate cache slot, set `state = RUNNING`, add to `running_batch`.
@@ -48,7 +48,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 3.3: Scheduler Correctness & Lifecycle Unit Test Suite (`tests/test_scheduler.py`)
+### Sub-Phase 3.3: Scheduler Correctness & Lifecycle Unit Test Suite (`tests/test_scheduler.py`)
 - **Objective:** Verify request admission, eviction, dynamic slots, and multi-sequence correctness.
 - **Key Tasks:**
   1. Test single and multi-request queue processing.
@@ -58,7 +58,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 3.4: Mixed Workload GPU Utilization Benchmarking (`benchmarks/benchmark_scheduler.py`)
+### Sub-Phase 3.4: Mixed Workload GPU Utilization Benchmarking (`benchmarks/benchmark_scheduler.py`)
 - **Objective:** Benchmark continuous batching vs static batching under staggered request arrivals and varying lengths.
 - **Key Metrics Captured:**
   1. **Aggregate Throughput:** Total tokens generated across all concurrent requests per second.
@@ -69,7 +69,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 3.5: Master Comparison Table Update & Gap Analysis Report
+### Sub-Phase 3.5: Master Comparison Table Update & Gap Analysis Report
 - **Objective:** Update `README.md` master comparison table, plot GPU utilization charts, and report batching efficiency.
 - **Key Tasks:**
   1. Generate GPU utilization bar chart `analysis/plots/phase3_gpu_utilization.png`.
@@ -79,19 +79,19 @@ flowchart LR
 
 ---
 
-## 📈 Summary of Phase 3 Deliverables Matrix
+## Summary of Phase 3 Deliverables Matrix
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **3.1** | Scheduler Data Structure | `src/scheduler.py` | ✅ Complete |
-| **3.2** | Batched Forward Engine | `src/scheduler.py` | ✅ Complete |
-| **3.3** | Scheduler Unit Tests | `tests/test_scheduler.py` | ✅ Complete |
-| **3.4** | Mixed Workload Benchmark | `benchmarks/benchmark_scheduler.py` | ✅ Complete |
-| **3.5** | Master Table & Utilization Plot | `README.md` | ✅ Complete |
+| **3.1** | Scheduler Data Structure | `src/scheduler.py` | Complete |
+| **3.2** | Batched Forward Engine | `src/scheduler.py` | Complete |
+| **3.3** | Scheduler Unit Tests | `tests/test_scheduler.py` | Complete |
+| **3.4** | Mixed Workload Benchmark | `benchmarks/benchmark_scheduler.py` | Complete |
+| **3.5** | Master Table & Utilization Plot | `README.md` | Complete |
 
 ---
 
-## 💡 Interview Readiness Note (MLSys / AI Infra Roles)
+## Interview Readiness Note (MLSys / AI Infra Roles)
 
 In technical interviews at OpenAI, Anthropic, or DeepMind:
 > *"How does continuous batching differ from static batching, and how do you handle variable prompt lengths during the prefill phase vs single-token decoding steps in a batched forward pass?"*

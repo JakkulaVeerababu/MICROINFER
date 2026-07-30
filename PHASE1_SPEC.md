@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 Phase 1 Overview & Architecture
+## Phase 1 Overview & Architecture
 
 Without a Key-Value (KV) cache, generating token $N+1$ requires running the full model forward pass over all preceding tokens $1 \dots N$ again from scratch. The total attention computation across $N$ generated tokens scales quadratically:
 
@@ -23,9 +23,9 @@ flowchart LR
 
 ---
 
-## 🛠️ Sub-Phase Breakdown
+## Sub-Phase Breakdown
 
-### 🔹 Sub-Phase 1.1: Uncached Token Generation Loop Design (`src/naive_generate.py`)
+### Sub-Phase 1.1: Uncached Token Generation Loop Design (`src/naive_generate.py`)
 - **Objective:** Implement a pure PyTorch generation loop without any KV-caching.
 - **Key Algorithmic Steps:**
   1. Tokenize input prompt string into tensor `generated` of shape `(1, prompt_len)`.
@@ -40,7 +40,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 1.2: Correctness Verification Suite (`tests/test_correctness.py`)
+### Sub-Phase 1.2: Correctness Verification Suite (`tests/test_correctness.py`)
 - **Objective:** Prove token-level equivalence between custom `naive_generate()` and standard HuggingFace `.generate()` baseline.
 - **Key Tasks:**
   1. Set `temperature=0.0` (greedy decoding) on both generators.
@@ -50,7 +50,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 1.3: Step-by-Step Latency Profiling Harness (`benchmarks/benchmark_naive.py`)
+### Sub-Phase 1.3: Step-by-Step Latency Profiling Harness (`benchmarks/benchmark_naive.py`)
 - **Objective:** Measure per-token latency $t_1, t_2, \dots, t_N$ across generation sequence lengths ($N \in \{16, 32, 64, 128, 256\}$).
 - **Key Metrics Captured:**
   1. **Step Latency Curve ($t_i$ vs $i$):** Per-token execution time as context window grows.
@@ -61,7 +61,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 1.4: Quadratic Slowdown Data Export & Plotting
+### Sub-Phase 1.4: Quadratic Slowdown Data Export & Plotting
 - **Objective:** Export raw step timings to JSON and generate visual latency growth charts.
 - **Key Tasks:**
   1. Save raw per-step measurements to `benchmarks/results/phase1_naive.json`.
@@ -70,7 +70,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 1.5: Master Benchmark Table Update & Gap Analysis
+### Sub-Phase 1.5: Master Benchmark Table Update & Gap Analysis
 - **Objective:** Update `README.md` master comparison table and document the mechanistic cause of uncached slowdown.
 - **Key Tasks:**
   1. Populate Phase 1 metrics (TTFT, TPOT, Throughput, Peak VRAM) in `README.md`.
@@ -79,19 +79,19 @@ flowchart LR
 
 ---
 
-## 📈 Summary of Phase 1 Deliverables Matrix
+## Summary of Phase 1 Deliverables Matrix
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **1.1** | Uncached Generator Loop | `src/naive_generate.py` | ✅ Complete |
-| **1.2** | Correctness Test Suite | `tests/test_correctness.py` | ✅ Complete |
-| **1.3** | Latency Profiler Harness | `benchmarks/benchmark_naive.py` | ✅ Complete |
-| **1.4** | Quadratic Data Export | `benchmarks/results/phase1_naive.json` | ✅ Complete |
-| **1.5** | Master Table Logging | `README.md` | ✅ Complete |
+| **1.1** | Uncached Generator Loop | `src/naive_generate.py` | Complete |
+| **1.2** | Correctness Test Suite | `tests/test_correctness.py` | Complete |
+| **1.3** | Latency Profiler Harness | `benchmarks/benchmark_naive.py` | Complete |
+| **1.4** | Quadratic Data Export | `benchmarks/results/phase1_naive.json` | Complete |
+| **1.5** | Master Table Logging | `README.md` | Complete |
 
 ---
 
-## 💡 Interview Readiness Note (MLSys / AI Infra Roles)
+## Interview Readiness Note (MLSys / AI Infra Roles)
 
 In technical interviews at OpenAI, Anthropic, or DeepMind:
 > *"Why does uncached autoregressive generation degrade quadratically, and what is the exact memory bandwidth vs compute bottleneck at step $N$?"*

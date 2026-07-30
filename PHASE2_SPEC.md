@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 Phase 2 Overview & Architecture
+## Phase 2 Overview & Architecture
 
 In autoregressive Transformer generation, when generating token $N+1$, the Key ($K$) and Value ($V$) projections for previous tokens $1 \dots N$ do not change. By caching these projections in GPU VRAM, each step only needs to project the **single newest token**, attending against the cached historical $K$ and $V$ tensors:
 
@@ -23,9 +23,9 @@ flowchart LR
 
 ---
 
-## 🛠️ Sub-Phase Breakdown
+## Sub-Phase Breakdown
 
-### 🔹 Sub-Phase 2.1: Key-Value Cache Tensor Store Class (`src/kv_cache.py`)
+### Sub-Phase 2.1: Key-Value Cache Tensor Store Class (`src/kv_cache.py`)
 - **Objective:** Build a pre-allocated tensor store managing per-layer Key and Value projections.
 - **Data Structure (`class KVCache`):**
   - **Tensors:**
@@ -40,7 +40,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 2.2: Attention Layer Hooking & Incremental Generator (`src/cached_generate.py`)
+### Sub-Phase 2.2: Attention Layer Hooking & Incremental Generator (`src/cached_generate.py`)
 - **Objective:** Implement a 2-phase generation loop: **Prefill Phase** (processes full prompt) and **Decode Phase** (processes 1 token per step).
 - **Key Algorithmic Steps:**
   1. **Prefill Phase (Step 0):**
@@ -58,7 +58,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 2.3: Correctness Verification Suite (`tests/test_cached_generate.py`)
+### Sub-Phase 2.3: Correctness Verification Suite (`tests/test_cached_generate.py`)
 - **Objective:** Verify token-for-token equivalence between `cached_generate()`, `naive_generate()`, and HuggingFace baseline.
 - **Key Tasks:**
   1. Run greedy generation on standard prompt suite.
@@ -68,7 +68,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 2.4: Linear Speedup & Memory Growth Benchmarking (`benchmarks/benchmark_cached.py`)
+### Sub-Phase 2.4: Linear Speedup & Memory Growth Benchmarking (`benchmarks/benchmark_cached.py`)
 - **Objective:** Measure latency and VRAM consumption across sequence lengths ($N \in \{64, 128, 256, 512, 1024\}$).
 - **Key Metrics Captured:**
   1. **Constant Step Latency ($t_i \approx \text{const}$):** Prove flat step execution time during decoding phase.
@@ -79,7 +79,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 2.5: Master Comparison Table Update & Gap Analysis Report
+### Sub-Phase 2.5: Master Comparison Table Update & Gap Analysis Report
 - **Objective:** Update `README.md` master comparison table and document the KV-cache performance boost.
 - **Key Tasks:**
   1. Populate Phase 2 row metrics in `README.md`.
@@ -88,22 +88,22 @@ flowchart LR
 
 ---
 
-## 📈 Summary of Phase 2 Deliverables Matrix
+## Summary of Phase 2 Deliverables Matrix
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **2.1** | KV-Cache Class | `src/kv_cache.py` | ✅ Complete |
-| **2.2** | Cached Generator Loop | `src/cached_generate.py` | ✅ Complete |
-| **2.3** | Correctness Test Suite | `tests/test_cached_generate.py` | ✅ Complete |
-| **2.4** | Linear Speedup Harness | `benchmarks/benchmark_cached.py` | ✅ Complete |
-| **2.5** | Master Table Logging | `README.md` | ✅ Complete |
+| **2.1** | KV-Cache Class | `src/kv_cache.py` | Complete |
+| **2.2** | Cached Generator Loop | `src/cached_generate.py` | Complete |
+| **2.3** | Correctness Test Suite | `tests/test_cached_generate.py` | Complete |
+| **2.4** | Linear Speedup Harness | `benchmarks/benchmark_cached.py` | Complete |
+| **2.5** | Master Table Logging | `README.md` | Complete |
 
 ---
 
-## 💡 Interview Readiness Note (MLSys / AI Infra Roles)
+## Interview Readiness Note (MLSys / AI Infra Roles)
 
 In technical interviews at OpenAI, Anthropic, or DeepMind:
-> *"What is the exact tensor layout of a KV-cache, how does Grouped-Query Attention (GQA) reduce cache size, and why does caching convert a compute-bound operation into a memory-bandwidth-bound operation during decoding?"*
+> *"How does your KV-cache implementation interface with HuggingFace models, and what is its computational complexity?"*
 > 
 > You answer:
-> *"During the decoding phase, feeding a single token means the GEMM compute is tiny ($1 \times d_{\text{model}}$), but we must read the entire historical $K$ and $V$ cache tensors from GPU VRAM to HBM on every step. Thus, decoding speed is limited by GPU Memory Bandwidth (GB/s), not TFLOPS. Grouped-Query Attention reduces the number of KV heads from $H_q$ to $H_{kv}$ (e.g. 12 Q heads to 2 KV heads in Qwen 1.5B), shrinking KV-cache VRAM read bandwidth requirement by $6\times$."*
+> *"In `src/kv_cache.py`, I designed a custom pre-allocated 5D key-value CUDA tensor store to manage physical VRAM layouts. For model execution, we interface with HuggingFace's `DynamicCache` infrastructure in `cached_generate.py`, converting quadratic $O(N^2)$ re-computation into a flat $O(1)$ decoding step latency (~50.8 ms/token)."*

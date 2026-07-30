@@ -1,4 +1,4 @@
-# MicroInfer 🚀
+# MicroInfer
 
 > **A From-Scratch LLM Inference Engine & Production vLLM Benchmarking Suite**  
 > *Built with PyTorch, CUDA 12.1, and Transformers on NVIDIA GeForce RTX 4050 Laptop GPU (6GB VRAM)*
@@ -11,7 +11,9 @@
 
 **MicroInfer** is a high-performance transformer serving engine engineered from first principles to implement, profile, and benchmark core LLM serving algorithms: **Pre-allocated Key-Value (KV) Caching**, **In-Flight Continuous Batching Scheduling**, and **8-Bit INT8 Weight Quantization**.
 
-## 🎯 Key Features & Technical Framing (Interview Defense)
+---
+
+## Technical Features & Framing (Interview Defense)
 
 1. **Pre-allocated KV-Cache Store (`src/kv_cache.py` & `src/cached_generate.py`):**
    - Implements a custom pre-allocated 5D key-value CUDA tensor store (`KVCache`) in `src/kv_cache.py`.
@@ -25,7 +27,7 @@
 
 ---
 
-## 📌 Master Performance Matrix (RTX 4050 6GB)
+## Master Performance Matrix (RTX 4050 6GB)
 
 | Phase | Serving System & Architecture | TTFT (1st Token) | TPOT (Decode Speed) | Aggregate Throughput | Peak VRAM | Complexity Scaling |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -36,13 +38,13 @@
 | **Phase 4** | INT8 Quantized Model Engine | **551.70 ms** | **446.90 ms/tok** | **2.31 tok/s** | **1.68 GB** | 8-Bit Weights (-41.9% VRAM) |
 | **Phase 5** | Production vLLM Reference Engine | **45.65 ms** | **53.01 ms/tok** | **18.75 tok/s** | **2.89 GB** | PagedAttention + Fused Kernels |
 
-> 🚀 **Key Performance Milestones:**
+> **Key Performance Milestones:**
 > - **KV-Caching Speedup:** Achieved **+20.5% generation throughput boost** (19.16 tok/s vs 15.90 tok/s) and reduced per-step decoding latency to a flat constant **~50.8 ms/token**.
 > - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.89 GB down to 1.68 GB** (**-41.9% GPU memory savings**).
 
 ---
 
-## 📊 Visual Benchmark Portfolio
+## Visual Benchmark Portfolio
 
 | Master Comparative Throughput | Master VRAM Memory Footprint |
 | :---: | :---: |
@@ -58,7 +60,7 @@
 
 ---
 
-## 🏗️ Repository Architecture & File Inventory
+## Repository Architecture & File Inventory
 
 ```
 MICROINFER/
@@ -103,7 +105,7 @@ MICROINFER/
 
 ---
 
-## 💻 Quick Start & Setup
+## Quick Start & Setup
 
 ### 1. Clone & Activate Environment
 ```bash
@@ -144,17 +146,17 @@ python benchmarks/baseline_vllm.py
 
 ---
 
-## 📜 Published Reports & Specifications
+## Published Reports & Specifications
 
-- 📙 **MLSys Technical Whitepaper:** [analysis/ANALYSIS.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/ANALYSIS.md)  
-- 📋 **Phase 0 Spec Matrix:** [PHASE0_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE0_SPEC.md) (100% Complete)  
-- 📋 **Phase 1 Spec Matrix:** [PHASE1_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE1_SPEC.md) (100% Complete)  
-- 📋 **Phase 2 Spec Matrix:** [PHASE2_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE2_SPEC.md) (100% Complete)  
-- 📋 **Phase 3 Spec Matrix:** [PHASE3_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE3_SPEC.md) (100% Complete)  
-- 📋 **Phase 4 Spec Matrix:** [PHASE4_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE4_SPEC.md) (100% Complete)  
-- 📋 **Phase 5 Spec Matrix:** [PHASE5_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE5_SPEC.md) (100% Complete)  
+- **MLSys Technical Whitepaper:** [analysis/ANALYSIS.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/ANALYSIS.md)  
+- **Phase 0 Spec Matrix:** [PHASE0_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE0_SPEC.md) (100% Complete)  
+- **Phase 1 Spec Matrix:** [PHASE1_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE1_SPEC.md) (100% Complete)  
+- **Phase 2 Spec Matrix:** [PHASE2_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE2_SPEC.md) (100% Complete)  
+- **Phase 3 Spec Matrix:** [PHASE3_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE3_SPEC.md) (100% Complete)  
+- **Phase 4 Spec Matrix:** [PHASE4_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE4_SPEC.md) (100% Complete)  
+- **Phase 5 Spec Matrix:** [PHASE5_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/PHASE5_SPEC.md) (100% Complete)  
 
 ---
 
-## 🌐 Live GitHub Repository
-👉 **[https://github.com/JakkulaVeerababu/MICROINFER](https://github.com/JakkulaVeerababu/MICROINFER)**
+## Live GitHub Repository
+[https://github.com/JakkulaVeerababu/MICROINFER](https://github.com/JakkulaVeerababu/MICROINFER)

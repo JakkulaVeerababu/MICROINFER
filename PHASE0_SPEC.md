@@ -5,7 +5,7 @@
 
 ---
 
-## 📌 Phase 0 Overview & Architecture
+## Phase 0 Overview & Architecture
 
 Phase 0 establishes empirical performance metrics before writing custom inference engine code. To ensure MLSys-grade statistical rigor, Phase 0 is divided into **5 sequential sub-phases**:
 
@@ -19,9 +19,9 @@ flowchart LR
 
 ---
 
-## 🛠️ Sub-Phase Breakdown
+## Sub-Phase Breakdown
 
-### 🔹 Sub-Phase 0.1: Environment & GPU Hardware Diagnostics
+### Sub-Phase 0.1: Environment & GPU Hardware Diagnostics
 - **Objective:** Verify CUDA runtime environment, GPU hardware specifications, and dependency isolation.
 - **Key Tasks:**
   1. Verify PyTorch CUDA support (`torch.cuda.is_available() == True`).
@@ -32,7 +32,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 0.2: Base Open-Weight Model Selection & VRAM Memory Sizing
+### Sub-Phase 0.2: Base Open-Weight Model Selection & VRAM Memory Sizing
 - **Objective:** Select an optimal open-weight Transformer model that fits comfortably within 6GB VRAM while providing realistic benchmark signals.
 - **Selected Model:** `Qwen/Qwen2.5-1.5B-Instruct`
 - **Memory Footprint Calculations:**
@@ -44,7 +44,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 0.3: Unified Model Loader Engine Implementation (`src/model_loader.py`)
+### Sub-Phase 0.3: Unified Model Loader Engine Implementation (`src/model_loader.py`)
 - **Objective:** Implement a reusable, modular function to load tokenizers and model weights onto CUDA with VRAM diagnostics.
 - **Key Tasks:**
   1. Build `load_model_and_tokenizer(model_id, device, dtype)` in `src/model_loader.py`.
@@ -55,7 +55,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 0.4: Baseline Benchmarking Harness Construction (`benchmarks/baseline_hf.py`)
+### Sub-Phase 0.4: Baseline Benchmarking Harness Construction (`benchmarks/baseline_hf.py`)
 - **Objective:** Construct a benchmark suite that measures generation latency, throughput, and peak memory under controlled conditions.
 - **Core Engineering Requirements:**
   1. **Warm-Up Execution:** Run 1 discarded generation to initialize CUDA context and compile kernels.
@@ -68,7 +68,7 @@ flowchart LR
 
 ---
 
-### 🔹 Sub-Phase 0.5: Automated Result Logging & Baseline Report Generation
+### Sub-Phase 0.5: Automated Result Logging & Baseline Report Generation
 - **Objective:** Persist structured JSON benchmark data and populate the master project documentation.
 - **Key Tasks:**
   1. Export raw benchmark results to `benchmarks/results/phase0_baseline_hf.json`.
@@ -78,19 +78,19 @@ flowchart LR
 
 ---
 
-## 📈 Summary of Phase 0 Deliverables Matrix
+## Summary of Phase 0 Deliverables Matrix
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **0.1** | GPU & Environment Checks | `requirements.txt`, `.gitignore` | ✅ Complete |
-| **0.2** | Model Selection (Qwen 1.5B) | `PHASE0_SPEC.md` | ✅ Complete |
-| **0.3** | Model Loader Module | `src/model_loader.py` | ✅ Complete |
-| **0.4** | Baseline Benchmark Harness | `benchmarks/baseline_hf.py` | ✅ Complete |
-| **0.5** | Benchmark Results & Report | `benchmarks/results/phase0_baseline_hf.json` | ✅ Complete |
+| **0.1** | GPU & Environment Checks | `requirements.txt`, `.gitignore` | Complete |
+| **0.2** | Model Selection (Qwen 1.5B) | `PHASE0_SPEC.md` | Complete |
+| **0.3** | Model Loader Module | `src/model_loader.py` | Complete |
+| **0.4** | Baseline Benchmark Harness | `benchmarks/baseline_hf.py` | Complete |
+| **0.5** | Benchmark Results & Report | `benchmarks/results/phase0_baseline_hf.json` | Complete |
 
 ---
 
-## 💡 Interview Readiness Note (MLSys / AI Infra Roles)
+## Interview Readiness Note (MLSys / AI Infra Roles)
 
 In technical interviews at FAANG / AI Labs (OpenAI, Anthropic, DeepMind), Phase 0 answers the foundational question:
 > *"What is your baseline benchmark methodology, and how did you isolate model framework overhead from GPU memory bandwidth bottlenecks?"*

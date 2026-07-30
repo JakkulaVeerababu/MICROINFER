@@ -6,7 +6,7 @@
 
 ---
 
-## 📌 Master Executive Performance Matrix
+## Master Executive Performance Matrix
 
 | Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/sec) | Peak VRAM (GB) | Performance Scaling Model |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -19,7 +19,7 @@
 
 ---
 
-## 📈 Master Visualization Charts
+## Master Visualization Charts
 
 ![Master Throughput Comparison](plots/master_throughput_comparison.png)
 
@@ -27,7 +27,7 @@
 
 ---
 
-## 🎯 Interview Defense & Implementation Transparency Guide
+## Interview Defense & Implementation Transparency Guide
 
 When discussing MicroInfer in technical interviews at Tier-1 companies (OpenAI, Anthropic, Google DeepMind, Meta), use this honest, defensible framing:
 
@@ -45,7 +45,7 @@ When discussing MicroInfer in technical interviews at Tier-1 companies (OpenAI, 
 
 ---
 
-## 🔬 Mechanistic Deep-Dive & Architectural Analysis
+## Mechanistic Deep-Dive & Architectural Analysis
 
 ### 1. The Bottleneck of Uncached Generation ($\mathcal{O}(N^2)$ FLOP Overhead)
 Without key-value caching, generating token $N$ requires calculating attention projections over all previous $1 \dots N-1$ tokens from scratch. The computational FLOP complexity grows quadratically:
@@ -66,7 +66,7 @@ Weight quantization reduces memory allocation from **2.89 GB down to 1.68 GB** (
 
 ---
 
-## 💡 Tier-1 MLSys System Design Interview Questions & Answers
+## Tier-1 MLSys System Design Interview Questions & Answers
 
 ### Q1: *"Why is LLM decoding memory-bandwidth bound rather than compute bound?"*
 > **Answer:** During decoding, we execute a single-token forward pass $(B=1, T=1)$. The model must fetch all 1.5B parameters (~3GB in FP16) from VRAM to GPU SRAM to perform arithmetic over a single token. The arithmetic intensity (FLOPs / byte) is approximately 1.0, far below NVIDIA GPU saturation thresholds (~100-300 FLOPs/byte). Thus, decoding speed is strictly limited by GPU memory bandwidth (GB/s).
@@ -76,7 +76,7 @@ Weight quantization reduces memory allocation from **2.89 GB down to 1.68 GB** (
 
 ---
 
-## 🎯 Benchmark Artifacts Reference
+## Benchmark Artifacts Reference
 - **Phase 0 Data:** [benchmarks/results/phase0_baseline_hf.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase0_baseline_hf.json)
 - **Phase 1 Data:** [benchmarks/results/phase1_naive.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase1_naive.json)
 - **Phase 2 Data:** [benchmarks/results/phase2_cached.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase2_cached.json)
