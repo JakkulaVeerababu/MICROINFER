@@ -41,6 +41,7 @@ def load_model_and_tokenizer(
         device_map=device,
         trust_remote_code=True,
     )
+    model.eval()
     
     load_time = time.perf_counter() - start_time
     print(f"[MicroInfer] Model loaded successfully in {load_time:.2f}s.")
