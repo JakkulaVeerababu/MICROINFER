@@ -88,10 +88,8 @@ flowchart LR
 
 ---
 
-## Interview Readiness Note (MLSys / AI Infra Roles)
+## Open Questions I'd Want to Explain Live
 
-In technical interviews at OpenAI, Anthropic, or DeepMind:
-> *"How does INT8 quantization affect memory bandwidth vs compute bound operations in LLM serving?"*
-> 
-> You answer:
-> *"LLM autoregressive decoding is strictly memory-bandwidth bound (arithmetic intensity = 1 FLOP per byte transferred). By quantizing weights from FP16 to INT8, we cut the memory transfer payload by 50% per token step. While 8-bit weight dequantization introduces a small compute overhead, the reduction in memory bandwidth bottleneck significantly reduces VRAM footprint and enables serving larger models or bigger batch sizes on resource-constrained GPUs."*
+- Phase 4 TPOT is 446.90 ms/tok — roughly 7x slower than FP16 despite fewer bytes transferred — why does INT8 dequantization on this GPU impose such a large latency penalty, and is this specific to `bitsandbytes` on Ada Lovelace consumer GPUs?
+- The VRAM drop is -41.9% (2.89 GB → 1.68 GB), which is less than the theoretical 50% from halving bytes-per-weight — where does the remaining gap come from (activations, KV cache, runtime buffers)?
+- Would AWQ or GPTQ quantization at INT4 produce better throughput than `bitsandbytes` INT8 on this hardware, and what accuracy trade-off would that introduce at 1.5B parameters?

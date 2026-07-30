@@ -91,10 +91,8 @@ flowchart LR
 
 ---
 
-## Interview Readiness Note (MLSys / AI Infra Roles)
+## Open Questions I'd Want to Explain Live
 
-In technical interviews at OpenAI, Anthropic, or DeepMind:
-> *"Why does uncached autoregressive generation degrade quadratically, and what is the exact memory bandwidth vs compute bottleneck at step $N$?"*
-> 
-> You answer:
-> *"Without KV-caching, every new token requires re-projecting all $N$ previous tokens through $W_q, W_k, W_v$ matrices in every transformer layer. The GEMM dimensions scale as $(1 \times d_{\text{model}}) \times (d_{\text{model}} \times d_{\text{model}})$ on step 1, but grow to $(N \times d_{\text{model}}) \times (d_{\text{model}} \times d_{\text{model}})$ on step $N$, creating an $\mathcal{O}(N^2)$ re-computation penalty."*
+- The O(N²) TPOT growth from N=16 to N=256 is only +5.1ms (naive) vs +2.1ms (HF) — at what sequence length would the quadratic penalty become dominant enough to matter in a real serving workload?
+- HF `.generate()` uses its internal `DynamicCache` by default, so it's not a fair uncached baseline — what would the numbers look like if we forced HF to run without its cache (`past_key_values=None` every step)?
+- The per-step latency curve in `phase1_quadratic_scaling.png` shows some non-monotonic jitter — how much of that is measurement noise vs real variance in CUDA kernel scheduling at this model size?

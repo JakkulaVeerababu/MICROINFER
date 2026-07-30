@@ -81,21 +81,11 @@ See `analysis/plots/phase1_scaling_crossover.png` for the visual crossover chart
 
 ---
 
-## Interview Defense & Implementation Transparency Guide
+## Open Questions I'd Want to Explain Live
 
-When discussing MicroInfer in technical interviews at Tier-1 companies (OpenAI, Anthropic, Google DeepMind, Meta), use this honest, defensible framing:
-
-### 1. KV-Cache Implementation (`src/kv_cache.py` vs `src/cached_generate.py`)
-- **Honest Framing:** We built a custom pre-allocated 5D key-value CUDA tensor store (`KVCache`) in `src/kv_cache.py` to study fixed-memory cache allocation. In our generator pipeline (`cached_generate.py`), we interface with HuggingFace models using HuggingFace's `DynamicCache` infrastructure.
-- **Interview Defense:** *"In `src/kv_cache.py`, I designed a custom pre-allocated 5D tensor cache store (`[num_layers, B, num_heads, max_len, head_dim]`) to understand physical VRAM allocation. For interfacing directly with HuggingFace model forward passes, I leveraged HuggingFace's `DynamicCache` data structure, which handles cache growth while achieving our flat $O(1)$ per-step decoding performance (~50.8 ms/token)."*
-
-### 2. Request Scheduler Mechanics (`src/scheduler.py`)
-- **Honest Framing:** The scheduler in `src/scheduler.py` implements iteration-level request queue management and lifecycle tracking (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`). Active sequences are processed sequentially within each step loop.
-- **Interview Defense:** *"My scheduler implements dynamic in-flight request admission and completed sequence eviction based on sequence state tracking. To keep PyTorch code simple without writing custom Triton/CUDA batched attention kernels, active sequences are stepped in an iteration loop. Full tensor-level batch stacking across concurrent sequences is the natural next kernel-level optimization."*
-
-### 3. Quantization Tier (`src/quant_loader.py`)
-- **Honest Framing:** MicroInfer uses the `bitsandbytes` library (`load_in_8bit=True`) for 8-bit weight matrix multiplication rather than custom handwritten CUDA quantization kernels.
-- **Interview Defense:** *"I integrated `bitsandbytes` as our INT8 serving tier to profile VRAM reduction (-41.9% memory savings from 2.89 GB down to 1.68 GB) and analyze the trade-off between reduced GPU memory bandwidth and 8-bit dequantization latency on consumer GPUs."*
+- How does the custom pre-allocated 5D tensor cache (`KVCache` in `src/kv_cache.py`) compare in memory layout and overhead to HuggingFace's `DynamicCache` used in the generator pipeline?
+- Why did we step active scheduler sequences in a PyTorch iteration loop rather than stacking them into a single batched tensor, and what kernel optimizations would be needed for true batch stacking?
+- Why did INT8 quantization via `bitsandbytes` cause a ~7x latency slowdown on RTX 4050 despite saving -41.9% VRAM, and how do dequantization overheads differ between consumer GPUs and datacenter accelerators?
 
 ---
 
@@ -120,13 +110,10 @@ Weight quantization reduces memory allocation from **2.89 GB down to 1.68 GB** (
 
 ---
 
-## Tier-1 MLSys System Design Interview Questions & Answers
+## Open Questions I'd Want to Explain Live
 
-### Q1: *"Why is LLM decoding memory-bandwidth bound rather than compute bound?"*
-> **Answer:** During decoding, we execute a single-token forward pass $(B=1, T=1)$. The model must fetch all 1.5B parameters (~3GB in FP16) from VRAM to GPU SRAM to perform arithmetic over a single token. The arithmetic intensity (FLOPs / byte) is approximately 1.0, far below NVIDIA GPU saturation thresholds (~100-300 FLOPs/byte). Thus, decoding speed is strictly limited by GPU memory bandwidth (GB/s).
-
-### Q2: *"How does PagedAttention in vLLM address memory fragmentation?"*
-> **Answer:** Traditional KV-caches allocate contiguous VRAM arrays for maximum sequence length ($L_{\text{max}}=2048$), causing severe internal and external memory fragmentation (up to 60-80% wasted VRAM). PagedAttention borrows virtual memory paging principles from OS design, partitioning the KV-cache into fixed-size physical blocks (e.g., 16 tokens). Blocks are allocated dynamically on-demand, virtually eliminating fragmentation and enabling up to 2-4x higher concurrent batch sizes.
+- Why is single-token autoregressive decoding strictly memory-bandwidth bound at batch size 1 (arithmetic intensity ~1.0 FLOP/byte), and at what batch size does serving transition to compute-bound on modern GPU architectures?
+- How does vLLM's PagedAttention eliminate memory fragmentation compared to traditional contiguous KV-caches, and how could MicroInfer incorporate virtual block tables without writing custom CUDA kernels?
 
 ---
 

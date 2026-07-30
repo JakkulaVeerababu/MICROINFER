@@ -100,10 +100,8 @@ flowchart LR
 
 ---
 
-## Interview Readiness Note (MLSys / AI Infra Roles)
+## Open Questions I'd Want to Explain Live
 
-In technical interviews at OpenAI, Anthropic, or DeepMind:
-> *"How does your KV-cache implementation interface with HuggingFace models, and what is its computational complexity?"*
-> 
-> You answer:
-> *"In `src/kv_cache.py`, I designed a custom pre-allocated 5D key-value CUDA tensor store to manage physical VRAM layouts. For model execution, we interface with HuggingFace's `DynamicCache` infrastructure in `cached_generate.py`, converting quadratic $O(N^2)$ re-computation into a flat $O(1)$ decoding step latency (~50.8 ms/token)."*
+- `src/kv_cache.py` pre-allocates a fixed `max_seq_len` tensor — what happens to VRAM when a request generates fewer tokens than the maximum, and is that internal fragmentation acceptable at this model scale?
+- The cached generator in `cached_generate.py` uses HF's `DynamicCache` for the actual forward pass rather than directly plugging in the custom `KVCache` tensors — what would it take to wire the custom store directly into the model's attention layers?
+- Phase 2 TPOT (~51.9 ms/tok) is faster than Phase 0 HF baseline TPOT (~68.6 ms/tok) — but Phase 0 also uses an internal cache, so is the delta driven by decode-path differences or by something in how TTFT is measured?

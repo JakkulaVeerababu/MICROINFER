@@ -91,10 +91,8 @@ flowchart LR
 
 ---
 
-## Interview Readiness Note (MLSys / AI Infra Roles)
+## Open Questions I'd Want to Explain Live
 
-In technical interviews at OpenAI, Anthropic, or DeepMind:
-> *"How does continuous batching differ from static batching, and how do you handle variable prompt lengths during the prefill phase vs single-token decoding steps in a batched forward pass?"*
-> 
-> You answer:
-> *"Static batching suffers from the 'straggler problem' where the entire batch is held hostage by the longest sequence. Continuous batching operates at iteration granularity. For variable prompt lengths during prefill, requests are processed using attention masking or separate prefill steps, while decoding requests process uniform $(B, 1)$ single-token inputs per step, allowing new requests to join the running batch dynamically as soon as a cache slot opens up."*
+- The scheduler steps active sequences in a Python iteration loop rather than stacking them into a single batched tensor — how much throughput is left on the table by not doing true tensor-level batching, and what would the batch-stacking implementation require?
+- When a sequence finishes mid-step and a new one from the waiting queue gets admitted, the new sequence needs a prefill pass before it can decode — how does the current implementation handle that prefill/decode mix within a single scheduler step?
+- Phase 3 aggregate throughput (18.13 tok/s) is lower than Phase 2's single-request throughput (19.16 tok/s) — is that expected given the sequential stepping, or does it suggest the scheduler overhead is measurable at this batch size?

@@ -90,7 +90,8 @@ flowchart LR
 
 ---
 
-## Interview Readiness Note (MLSys / AI Infra Roles)
+## Open Questions I'd Want to Explain Live
 
-In technical interviews at FAANG / AI Labs (OpenAI, Anthropic, DeepMind), Phase 0 answers the foundational question:
-> *"What is your baseline benchmark methodology, and how did you isolate model framework overhead from GPU memory bandwidth bottlenecks?"*
+- Why did we choose `max_new_tokens=64` and 10 timed runs as the canonical benchmark conditions — and how sensitive are the mean/p50/p99 numbers to that choice?
+- The TTFT measurement calls `.generate()` with `max_new_tokens=1` separately from the TPOT run — does that double-call inflate TTFT by re-paying HF Python dispatch overhead twice?
+- Phase 0's VRAM figure (2.89 GB) is lower than the theoretical model weight size (~3.08 GB) — what explains the gap, and does `torch.cuda.max_memory_allocated()` capture all relevant allocations?

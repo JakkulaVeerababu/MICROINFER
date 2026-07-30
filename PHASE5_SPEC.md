@@ -51,7 +51,7 @@ flowchart LR
 - **Key Sections:**
   - Full Phase 0 - Phase 5 Performance Comparison Matrix.
   - Mechanistic Bottleneck Breakdown (Memory Bandwidth, KV-Cache Fragmentation, Quantization Overhead).
-  - Production MLSys System Design Interview Questions & Answers.
+  - Open System Design Questions to Explain Live.
 - **Deliverable:** Updated `README.md` + `ANALYSIS.md`.
 
 ---
