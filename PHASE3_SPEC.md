@@ -83,11 +83,11 @@ flowchart LR
 
 | Sub-Phase | Component | Target File / Artifact | Status |
 | :--- | :--- | :--- | :---: |
-| **3.1** | Scheduler Data Structure | `src/scheduler.py` | ⏳ Pending |
-| **3.2** | Batched Forward Engine | `src/scheduler.py` | ⏳ Pending |
-| **3.3** | Scheduler Unit Tests | `tests/test_scheduler.py` | ⏳ Pending |
-| **3.4** | Mixed Workload Benchmark | `benchmarks/benchmark_scheduler.py` | ⏳ Pending |
-| **3.5** | Master Table & Utilization Plot | `README.md` | ⏳ Pending |
+| **3.1** | Scheduler Data Structure | `src/scheduler.py` | ✅ Complete |
+| **3.2** | Batched Forward Engine | `src/scheduler.py` | ✅ Complete |
+| **3.3** | Scheduler Unit Tests | `tests/test_scheduler.py` | ✅ Complete |
+| **3.4** | Mixed Workload Benchmark | `benchmarks/benchmark_scheduler.py` | ✅ Complete |
+| **3.5** | Master Table & Utilization Plot | `README.md` | ✅ Complete |
 
 ---
 

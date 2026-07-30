@@ -53,7 +53,7 @@ microinfer/
 | **Phase 0** | HuggingFace `.generate()` Baseline | **84.62 ms** | **68.55 ms/tok** | **14.60 tok/s** | **2.89 GB** |
 | **Phase 1** | Naive Generator (No Cache) | **62.24 ms** | **62.78 ms/tok** | **15.90 tok/s** | **2.94 GB** |
 | **Phase 2** | KV-Cache Generator | **63.73 ms** | **51.89 ms/tok** | **19.16 tok/s** | **2.89 GB** |
-| **Phase 3** | Continuous Batching Scheduler | *TBD* | *TBD* | *TBD* | *TBD* |
+| **Phase 3** | Continuous Batching Scheduler | **117.19 ms** | **N/A** | **18.13 tok/s** | **2.89 GB** |
 | **Phase 4** | INT8 Quantized Engine | *TBD* | *TBD* | *TBD* | *TBD* |
 | **Ref** | Production vLLM | *TBD* | *TBD* | *TBD* | *TBD* |
 

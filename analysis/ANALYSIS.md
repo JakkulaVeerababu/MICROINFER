@@ -12,6 +12,7 @@
 | **Phase 0** | HuggingFace `.generate()` Baseline | **84.62 ms** | **68.55 ms/tok** | **14.60 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in KV-Cache) |
 | **Phase 1** | Naive Generator (No Cache) | **62.24 ms** | **62.78 ms/tok** | **15.90 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown |
 | **Phase 2** | KV-Cache Generator | **63.73 ms** | **51.89 ms/tok** | **19.16 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($O(1)$ Decode Step) |
+| **Phase 3** | Continuous Batching Scheduler | **117.19 ms** | **N/A (Concurrent)** | **18.13 tok/s** | **2.89 GB** | In-flight Request Scheduling |
 
 ---
 
@@ -46,7 +47,20 @@ In **Phase 2**, we implemented a pre-allocated Key-Value cache tensor store ([sr
 ### Key Phase 2 Performance Achievements:
 1. **Throughput Boost:** Throughput increased from **15.90 tok/sec** (Phase 1 Naive) to **19.16 tok/sec** (Phase 2 KV-Cache), representing a **+20.5% generation speedup**.
 2. **Decoding Latency Reduction:** TPOT dropped from **62.78 ms/token** down to **51.89 ms/token**.
-3. **Flat $O(1)$ Decoding Step:** While Phase 1 step latency grows with context length, Phase 2 decoding step latency remains completely **flat and constant (~50.8 ms/token)** regardless of sequence position.
+3. **Flat $O(1)$ Decoding Step:** Decoding step latency remains completely **flat and constant (~50.8 ms/token)** regardless of sequence position.
+
+---
+
+## ⚡ Phase 3 Analysis: Continuous Batching Scheduler & Mixed Workload
+
+In **Phase 3**, we implemented an in-flight **Continuous Batching Scheduler** ([src/scheduler.py](file:///c:/Users/LENOVO/Desktop/MICROINFER/src/scheduler.py)) managing dynamic request queues and lifecycle states (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`).
+
+![Phase 3 Continuous Batching Performance](plots/phase3_scheduler_performance.png)
+
+### Key Phase 3 Performance Achievements:
+1. **Multi-Request Queue Management:** Evaluated 5 mixed workload requests processing **131 total tokens** concurrently in **7.22 seconds**.
+2. **In-Flight Admission & Eviction:** Completed sequences evicted instantly upon EOS/max_tokens, releasing slots for queued waiting requests without padding waste.
+3. **System Capacity under Load:** Maintained **18.13 tokens/sec aggregate throughput** across 4 active concurrent batch slots on RTX 4050.
 
 ---
 
@@ -54,5 +68,6 @@ In **Phase 2**, we implemented a pre-allocated Key-Value cache tensor store ([sr
 - **Phase 0 Data:** [benchmarks/results/phase0_baseline_hf.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase0_baseline_hf.json)
 - **Phase 1 Data:** [benchmarks/results/phase1_naive.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase1_naive.json)
 - **Phase 2 Data:** [benchmarks/results/phase2_cached.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase2_cached.json)
+- **Phase 3 Data:** [benchmarks/results/phase3_scheduler.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase3_scheduler.json)
 - **System Diagnostics:** [analysis/gpu_diagnostics.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/gpu_diagnostics.json)
 - **VRAM Memory Sizing:** [analysis/memory_sizing.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/memory_sizing.json)

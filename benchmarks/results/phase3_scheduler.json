@@ -1,0 +1,61 @@
+{
+  "phase": "Phase 3 - Continuous Batching Scheduler",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "max_batch_size": 2,
+  "total_requests": 5,
+  "total_tokens_generated": 131,
+  "execution_time_sec": 7.41,
+  "aggregate_throughput_tok_per_sec": 17.68,
+  "average_ttft_ms": 127.84,
+  "average_request_latency_ms": 1481.18,
+  "peak_vram_gb": 2.89,
+  "requests": [
+    {
+      "seq_id": 2,
+      "prompt": "Write a Python function for binary search.",
+      "input_tokens": 8,
+      "generated_tokens": 20,
+      "ttft_ms": 93.72,
+      "total_latency_ms": 1110.93,
+      "output_sample": " The function should take in a sorted list and a target value as input and retur..."
+    },
+    {
+      "seq_id": 1,
+      "prompt": "Explain the transformer attention mechanism in detail.",
+      "input_tokens": 9,
+      "generated_tokens": 32,
+      "ttft_ms": 357.02,
+      "total_latency_ms": 2041.73,
+      "output_sample": " The transformer attention mechanism is a key component of the transformer archi..."
+    },
+    {
+      "seq_id": 3,
+      "prompt": "What are the advantages of continuous batching?",
+      "input_tokens": 8,
+      "generated_tokens": 25,
+      "ttft_ms": 59.88,
+      "total_latency_ms": 1365.5,
+      "output_sample": " A. It can reduce the amount of material in the batching bin, making it easier t..."
+    },
+    {
+      "seq_id": 4,
+      "prompt": "Describe the GPU memory hierarchy.",
+      "input_tokens": 6,
+      "generated_tokens": 30,
+      "ttft_ms": 70.3,
+      "total_latency_ms": 1613.52,
+      "output_sample": " The GPU memory hierarchy is a set of memory levels that store data for the GPU ..."
+    },
+    {
+      "seq_id": 5,
+      "prompt": "How does post-training quantization reduce model size?",
+      "input_tokens": 10,
+      "generated_tokens": 24,
+      "ttft_ms": 58.27,
+      "total_latency_ms": 1274.22,
+      "output_sample": " Post-training quantization is a technique used to reduce the size of a model by..."
+    }
+  ]
+}
