@@ -46,6 +46,8 @@ microinfer/
 
 ## 📊 Benchmark Results Summary (RTX 4050 6GB)
 
+> Detailed profiler analysis and visual latency charts are documented in **[analysis/ANALYSIS.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/analysis/ANALYSIS.md)**.
+
 | Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/s) | Peak VRAM |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Phase 0** | HuggingFace `.generate()` Baseline | **84.62 ms** | **68.55 ms/tok** | **14.60 tok/s** | **2.89 GB** |
@@ -54,6 +56,10 @@ microinfer/
 | **Phase 3** | Continuous Batching Scheduler | *TBD* | *TBD* | *TBD* | *TBD* |
 | **Phase 4** | INT8 Quantized Engine | *TBD* | *TBD* | *TBD* | *TBD* |
 | **Ref** | Production vLLM | *TBD* | *TBD* | *TBD* | *TBD* |
+
+### 📈 Latency & Scaling Charts
+- **Phase 0 Baseline Chart:** `analysis/plots/phase0_baseline.png`
+- **Phase 1 Quadratic Scaling Chart:** `analysis/plots/phase1_quadratic_scaling.png`
 
 ---
 
