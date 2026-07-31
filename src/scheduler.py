@@ -17,6 +17,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Tuple
 from transformers.cache_utils import DynamicCache
+from src.kv_cache import KVCache
 
 
 class SequenceState(Enum):
@@ -69,11 +70,17 @@ class ContinuousBatchScheduler:
         tokenizer: Any,
         max_new_tokens: int = 128,
         temperature: float = 0.0,
+        model: Optional[torch.nn.Module] = None,
     ) -> Sequence:
         """
         Submits a new generation request to the waiting queue.
         """
         prompt_tokens = tokenizer(prompt, return_tensors="pt").input_ids[0].tolist()
+        cache_slot = (
+            KVCache.from_model(model, max_seq_len=len(prompt_tokens) + max_new_tokens + 64)
+            if model is not None
+            else None
+        )
         seq = Sequence(
             seq_id=self._next_seq_id,
             prompt=prompt,
@@ -81,7 +88,7 @@ class ContinuousBatchScheduler:
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             state=SequenceState.WAITING,
-            cache_slot=DynamicCache(),
+            cache_slot=cache_slot,
         )
         self._next_seq_id += 1
         self.waiting_queue.append(seq)
@@ -98,6 +105,9 @@ class ContinuousBatchScheduler:
         while len(self.running_batch) < self.max_batch_size and self.waiting_queue:
             seq = self.waiting_queue.pop(0)
             seq.state = SequenceState.RUNNING
+            if seq.cache_slot is None:
+                max_len = len(seq.prompt_tokens) + seq.max_new_tokens + 64
+                seq.cache_slot = KVCache.from_model(model, max_seq_len=max_len)
             self.running_batch.append(seq)
 
         if not self.running_batch:

@@ -2,8 +2,8 @@
   "phase": "Phase 5 - Production Reference Engine",
   "engine": "reference-engine (no vLLM)",
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
-  "max_new_tokens": 5,
-  "concurrent_requests_per_wave": 2,
+  "max_new_tokens": 64,
+  "concurrent_requests_per_wave": 16,
   "num_warmup": 3,
   "raw_requests": [
     {
@@ -11,18 +11,1440 @@
       "seq_id": 1,
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
-      "generated_tokens": 5,
-      "ttft_ms": 50.57,
-      "total_latency_ms": 235.2
+      "generated_tokens": 64,
+      "ttft_ms": 83.84,
+      "total_latency_ms": 4650.02
     },
     {
       "wave": 1,
       "seq_id": 2,
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
-      "generated_tokens": 5,
-      "ttft_ms": 50.98,
-      "total_latency_ms": 235.95
+      "generated_tokens": 64,
+      "ttft_ms": 84.23,
+      "total_latency_ms": 4678.41
+    },
+    {
+      "wave": 1,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 87.08,
+      "total_latency_ms": 4610.01
+    },
+    {
+      "wave": 1,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 90.2,
+      "total_latency_ms": 4566.38
+    },
+    {
+      "wave": 1,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 84.97,
+      "total_latency_ms": 4563.8
+    },
+    {
+      "wave": 1,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 84.12,
+      "total_latency_ms": 4485.13
+    },
+    {
+      "wave": 1,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 85.0,
+      "total_latency_ms": 4531.06
+    },
+    {
+      "wave": 1,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 84.37,
+      "total_latency_ms": 4612.8
+    },
+    {
+      "wave": 1,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 82.9,
+      "total_latency_ms": 4679.3
+    },
+    {
+      "wave": 1,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 90.56,
+      "total_latency_ms": 4533.39
+    },
+    {
+      "wave": 1,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 85.52,
+      "total_latency_ms": 4675.18
+    },
+    {
+      "wave": 1,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 93.41,
+      "total_latency_ms": 4735.48
+    },
+    {
+      "wave": 1,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 90.94,
+      "total_latency_ms": 4628.47
+    },
+    {
+      "wave": 1,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 90.55,
+      "total_latency_ms": 4645.71
+    },
+    {
+      "wave": 1,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 93.88,
+      "total_latency_ms": 4609.23
+    },
+    {
+      "wave": 1,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 89.56,
+      "total_latency_ms": 4560.09
+    },
+    {
+      "wave": 2,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 51.17,
+      "total_latency_ms": 4684.37
+    },
+    {
+      "wave": 2,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 50.44,
+      "total_latency_ms": 4666.0
+    },
+    {
+      "wave": 2,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 52.04,
+      "total_latency_ms": 4750.97
+    },
+    {
+      "wave": 2,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 63.06,
+      "total_latency_ms": 4845.78
+    },
+    {
+      "wave": 2,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 71.52,
+      "total_latency_ms": 4796.98
+    },
+    {
+      "wave": 2,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 70.43,
+      "total_latency_ms": 4789.04
+    },
+    {
+      "wave": 2,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 72.41,
+      "total_latency_ms": 4741.01
+    },
+    {
+      "wave": 2,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 89.41,
+      "total_latency_ms": 4733.27
+    },
+    {
+      "wave": 2,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 105.66,
+      "total_latency_ms": 4760.72
+    },
+    {
+      "wave": 2,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 79.71,
+      "total_latency_ms": 4790.36
+    },
+    {
+      "wave": 2,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 75.91,
+      "total_latency_ms": 4759.76
+    },
+    {
+      "wave": 2,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 96.13,
+      "total_latency_ms": 4795.0
+    },
+    {
+      "wave": 2,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 118.41,
+      "total_latency_ms": 4775.88
+    },
+    {
+      "wave": 2,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 112.65,
+      "total_latency_ms": 4737.65
+    },
+    {
+      "wave": 2,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 114.3,
+      "total_latency_ms": 4830.4
+    },
+    {
+      "wave": 2,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 106.94,
+      "total_latency_ms": 4754.66
+    },
+    {
+      "wave": 3,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 83.74,
+      "total_latency_ms": 4909.81
+    },
+    {
+      "wave": 3,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 82.79,
+      "total_latency_ms": 4876.01
+    },
+    {
+      "wave": 3,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 89.47,
+      "total_latency_ms": 4818.04
+    },
+    {
+      "wave": 3,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 87.25,
+      "total_latency_ms": 4960.42
+    },
+    {
+      "wave": 3,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 81.18,
+      "total_latency_ms": 4931.65
+    },
+    {
+      "wave": 3,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 86.43,
+      "total_latency_ms": 4862.06
+    },
+    {
+      "wave": 3,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 84.35,
+      "total_latency_ms": 4897.63
+    },
+    {
+      "wave": 3,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 86.73,
+      "total_latency_ms": 4942.76
+    },
+    {
+      "wave": 3,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 83.02,
+      "total_latency_ms": 4829.27
+    },
+    {
+      "wave": 3,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 83.88,
+      "total_latency_ms": 4838.57
+    },
+    {
+      "wave": 3,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 87.94,
+      "total_latency_ms": 4927.7
+    },
+    {
+      "wave": 3,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 85.71,
+      "total_latency_ms": 4868.34
+    },
+    {
+      "wave": 3,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 80.99,
+      "total_latency_ms": 4789.06
+    },
+    {
+      "wave": 3,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 80.63,
+      "total_latency_ms": 4756.68
+    },
+    {
+      "wave": 3,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 81.34,
+      "total_latency_ms": 4923.21
+    },
+    {
+      "wave": 3,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 79.66,
+      "total_latency_ms": 4889.61
+    },
+    {
+      "wave": 4,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 70.29,
+      "total_latency_ms": 4804.83
+    },
+    {
+      "wave": 4,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 70.1,
+      "total_latency_ms": 4877.81
+    },
+    {
+      "wave": 4,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 71.84,
+      "total_latency_ms": 4804.62
+    },
+    {
+      "wave": 4,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 75.69,
+      "total_latency_ms": 4875.41
+    },
+    {
+      "wave": 4,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 70.2,
+      "total_latency_ms": 4900.18
+    },
+    {
+      "wave": 4,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 71.11,
+      "total_latency_ms": 4933.95
+    },
+    {
+      "wave": 4,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 70.19,
+      "total_latency_ms": 4941.16
+    },
+    {
+      "wave": 4,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 69.88,
+      "total_latency_ms": 4877.42
+    },
+    {
+      "wave": 4,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 70.76,
+      "total_latency_ms": 4838.75
+    },
+    {
+      "wave": 4,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 70.41,
+      "total_latency_ms": 4935.33
+    },
+    {
+      "wave": 4,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 72.61,
+      "total_latency_ms": 4891.44
+    },
+    {
+      "wave": 4,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 82.14,
+      "total_latency_ms": 4847.85
+    },
+    {
+      "wave": 4,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 76.64,
+      "total_latency_ms": 4948.14
+    },
+    {
+      "wave": 4,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 70.32,
+      "total_latency_ms": 4826.13
+    },
+    {
+      "wave": 4,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 70.04,
+      "total_latency_ms": 4893.16
+    },
+    {
+      "wave": 4,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 69.59,
+      "total_latency_ms": 4943.96
+    },
+    {
+      "wave": 5,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 84.96,
+      "total_latency_ms": 4812.95
+    },
+    {
+      "wave": 5,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 94.22,
+      "total_latency_ms": 4862.13
+    },
+    {
+      "wave": 5,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 90.15,
+      "total_latency_ms": 4965.18
+    },
+    {
+      "wave": 5,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 95.49,
+      "total_latency_ms": 5047.35
+    },
+    {
+      "wave": 5,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 87.56,
+      "total_latency_ms": 5038.38
+    },
+    {
+      "wave": 5,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 89.23,
+      "total_latency_ms": 4996.95
+    },
+    {
+      "wave": 5,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 91.15,
+      "total_latency_ms": 4994.33
+    },
+    {
+      "wave": 5,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 87.22,
+      "total_latency_ms": 4951.59
+    },
+    {
+      "wave": 5,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 85.83,
+      "total_latency_ms": 4902.25
+    },
+    {
+      "wave": 5,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 86.33,
+      "total_latency_ms": 4967.98
+    },
+    {
+      "wave": 5,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 96.6,
+      "total_latency_ms": 4969.04
+    },
+    {
+      "wave": 5,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 88.71,
+      "total_latency_ms": 4938.11
+    },
+    {
+      "wave": 5,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 95.47,
+      "total_latency_ms": 4904.42
+    },
+    {
+      "wave": 5,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 94.78,
+      "total_latency_ms": 4924.04
+    },
+    {
+      "wave": 5,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 104.09,
+      "total_latency_ms": 5010.88
+    },
+    {
+      "wave": 5,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 86.9,
+      "total_latency_ms": 4927.05
+    },
+    {
+      "wave": 6,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 88.07,
+      "total_latency_ms": 4992.66
+    },
+    {
+      "wave": 6,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 87.9,
+      "total_latency_ms": 4971.15
+    },
+    {
+      "wave": 6,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 93.12,
+      "total_latency_ms": 5026.13
+    },
+    {
+      "wave": 6,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 93.14,
+      "total_latency_ms": 5058.46
+    },
+    {
+      "wave": 6,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 96.11,
+      "total_latency_ms": 4987.93
+    },
+    {
+      "wave": 6,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 92.08,
+      "total_latency_ms": 4983.23
+    },
+    {
+      "wave": 6,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 93.52,
+      "total_latency_ms": 4991.42
+    },
+    {
+      "wave": 6,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 105.05,
+      "total_latency_ms": 4972.55
+    },
+    {
+      "wave": 6,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 96.43,
+      "total_latency_ms": 5020.22
+    },
+    {
+      "wave": 6,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 92.15,
+      "total_latency_ms": 5023.69
+    },
+    {
+      "wave": 6,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 90.06,
+      "total_latency_ms": 4999.8
+    },
+    {
+      "wave": 6,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 97.1,
+      "total_latency_ms": 4972.16
+    },
+    {
+      "wave": 6,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 91.9,
+      "total_latency_ms": 5004.62
+    },
+    {
+      "wave": 6,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 95.2,
+      "total_latency_ms": 4954.17
+    },
+    {
+      "wave": 6,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 90.15,
+      "total_latency_ms": 5018.66
+    },
+    {
+      "wave": 6,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 87.38,
+      "total_latency_ms": 4999.25
+    },
+    {
+      "wave": 7,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 71.46,
+      "total_latency_ms": 4656.65
+    },
+    {
+      "wave": 7,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 71.19,
+      "total_latency_ms": 4671.58
+    },
+    {
+      "wave": 7,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 76.43,
+      "total_latency_ms": 4792.93
+    },
+    {
+      "wave": 7,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 72.22,
+      "total_latency_ms": 4871.74
+    },
+    {
+      "wave": 7,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 71.0,
+      "total_latency_ms": 4892.77
+    },
+    {
+      "wave": 7,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 89.0,
+      "total_latency_ms": 4747.62
+    },
+    {
+      "wave": 7,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 72.03,
+      "total_latency_ms": 4672.91
+    },
+    {
+      "wave": 7,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 71.49,
+      "total_latency_ms": 4680.79
+    },
+    {
+      "wave": 7,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 71.4,
+      "total_latency_ms": 4706.93
+    },
+    {
+      "wave": 7,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 72.44,
+      "total_latency_ms": 4686.75
+    },
+    {
+      "wave": 7,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 73.38,
+      "total_latency_ms": 4727.03
+    },
+    {
+      "wave": 7,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 73.82,
+      "total_latency_ms": 4764.35
+    },
+    {
+      "wave": 7,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 70.52,
+      "total_latency_ms": 4787.03
+    },
+    {
+      "wave": 7,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 70.67,
+      "total_latency_ms": 4761.7
+    },
+    {
+      "wave": 7,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 74.77,
+      "total_latency_ms": 4677.69
+    },
+    {
+      "wave": 7,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 70.73,
+      "total_latency_ms": 4774.53
+    },
+    {
+      "wave": 8,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 83.06,
+      "total_latency_ms": 4890.18
+    },
+    {
+      "wave": 8,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 83.81,
+      "total_latency_ms": 4948.79
+    },
+    {
+      "wave": 8,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 85.35,
+      "total_latency_ms": 4947.43
+    },
+    {
+      "wave": 8,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 83.36,
+      "total_latency_ms": 4923.44
+    },
+    {
+      "wave": 8,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 83.83,
+      "total_latency_ms": 4901.39
+    },
+    {
+      "wave": 8,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 83.19,
+      "total_latency_ms": 4927.07
+    },
+    {
+      "wave": 8,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 84.98,
+      "total_latency_ms": 4936.61
+    },
+    {
+      "wave": 8,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 82.95,
+      "total_latency_ms": 4960.81
+    },
+    {
+      "wave": 8,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 87.64,
+      "total_latency_ms": 5005.78
+    },
+    {
+      "wave": 8,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 98.4,
+      "total_latency_ms": 4816.48
+    },
+    {
+      "wave": 8,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 85.35,
+      "total_latency_ms": 4812.59
+    },
+    {
+      "wave": 8,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 83.02,
+      "total_latency_ms": 4913.31
+    },
+    {
+      "wave": 8,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 82.3,
+      "total_latency_ms": 5124.86
+    },
+    {
+      "wave": 8,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 84.75,
+      "total_latency_ms": 6221.35
+    },
+    {
+      "wave": 8,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 83.45,
+      "total_latency_ms": 5086.39
+    },
+    {
+      "wave": 8,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 87.33,
+      "total_latency_ms": 4965.23
+    },
+    {
+      "wave": 9,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 106.53,
+      "total_latency_ms": 6321.4
+    },
+    {
+      "wave": 9,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 114.26,
+      "total_latency_ms": 6360.65
+    },
+    {
+      "wave": 9,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 105.4,
+      "total_latency_ms": 6441.0
+    },
+    {
+      "wave": 9,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 101.34,
+      "total_latency_ms": 6350.62
+    },
+    {
+      "wave": 9,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 109.06,
+      "total_latency_ms": 6288.04
+    },
+    {
+      "wave": 9,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 110.45,
+      "total_latency_ms": 6253.7
+    },
+    {
+      "wave": 9,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 112.25,
+      "total_latency_ms": 6334.06
+    },
+    {
+      "wave": 9,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 104.7,
+      "total_latency_ms": 6200.72
+    },
+    {
+      "wave": 9,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 98.33,
+      "total_latency_ms": 6290.79
+    },
+    {
+      "wave": 9,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 115.66,
+      "total_latency_ms": 6275.25
+    },
+    {
+      "wave": 9,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 104.51,
+      "total_latency_ms": 6274.14
+    },
+    {
+      "wave": 9,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 102.42,
+      "total_latency_ms": 6424.73
+    },
+    {
+      "wave": 9,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 101.62,
+      "total_latency_ms": 6412.45
+    },
+    {
+      "wave": 9,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 102.72,
+      "total_latency_ms": 6259.81
+    },
+    {
+      "wave": 9,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 118.49,
+      "total_latency_ms": 6168.19
+    },
+    {
+      "wave": 9,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 121.07,
+      "total_latency_ms": 6308.73
+    },
+    {
+      "wave": 10,
+      "seq_id": 1,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 122.25,
+      "total_latency_ms": 6371.83
+    },
+    {
+      "wave": 10,
+      "seq_id": 2,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 100.57,
+      "total_latency_ms": 6325.83
+    },
+    {
+      "wave": 10,
+      "seq_id": 3,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 100.17,
+      "total_latency_ms": 6265.64
+    },
+    {
+      "wave": 10,
+      "seq_id": 4,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 101.93,
+      "total_latency_ms": 6382.69
+    },
+    {
+      "wave": 10,
+      "seq_id": 5,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 97.77,
+      "total_latency_ms": 6301.7
+    },
+    {
+      "wave": 10,
+      "seq_id": 6,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 102.86,
+      "total_latency_ms": 6381.03
+    },
+    {
+      "wave": 10,
+      "seq_id": 7,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 103.57,
+      "total_latency_ms": 6321.55
+    },
+    {
+      "wave": 10,
+      "seq_id": 8,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 100.28,
+      "total_latency_ms": 6368.38
+    },
+    {
+      "wave": 10,
+      "seq_id": 9,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 102.22,
+      "total_latency_ms": 6226.49
+    },
+    {
+      "wave": 10,
+      "seq_id": 10,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 111.11,
+      "total_latency_ms": 6375.45
+    },
+    {
+      "wave": 10,
+      "seq_id": 11,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 118.95,
+      "total_latency_ms": 6321.51
+    },
+    {
+      "wave": 10,
+      "seq_id": 12,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 143.98,
+      "total_latency_ms": 6347.9
+    },
+    {
+      "wave": 10,
+      "seq_id": 13,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 129.27,
+      "total_latency_ms": 6354.93
+    },
+    {
+      "wave": 10,
+      "seq_id": 14,
+      "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
+      "input_tokens": 14,
+      "generated_tokens": 64,
+      "ttft_ms": 96.82,
+      "total_latency_ms": 6319.16
+    },
+    {
+      "wave": 10,
+      "seq_id": 15,
+      "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
+      "input_tokens": 23,
+      "generated_tokens": 64,
+      "ttft_ms": 97.5,
+      "total_latency_ms": 6189.14
+    },
+    {
+      "wave": 10,
+      "seq_id": 16,
+      "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
+      "input_tokens": 15,
+      "generated_tokens": 64,
+      "ttft_ms": 109.86,
+      "total_latency_ms": 6216.63
     }
   ]
 }

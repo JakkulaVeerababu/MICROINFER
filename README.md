@@ -16,16 +16,15 @@
 ## Technical Features & Framing (Interview Defense)
 
 1. **KV-Cache Store & Two-Phase Generation Loop (`src/kv_cache.py` + `src/cached_generate.py`):**
-   - `src/kv_cache.py` implements a custom pre-allocated 5D CUDA tensor store (`KVCache`) — owns memory up front with no Python-list growth.
-   - `src/cached_generate.py` implements a **two-phase Prefill/Decode loop** with independent CUDA-synchronised TTFT and TPOT timers. Actual K/V tensor storage in this loop is via HuggingFace's `DynamicCache` (passed via `use_cache=True`); the contribution is the explicit loop control, cache lifecycle management, and measurement infrastructure — equivalent to the sequence-slot management layer in a production serving engine.
-   - *Open engineering question:* wiring `KVCache` directly into each attention layer (monkey-patching `Qwen2Attention.forward()`) would replace DynamicCache entirely; documented as a next step in `PHASE2_SPEC.md`.
+   - `src/kv_cache.py` implements a custom pre-allocated 5D CUDA tensor store (`KVCache`) — owns memory up front with no Python-list growth. It subclasses HuggingFace's `Cache` and `CacheLayerMixin` interfaces for native model integration.
+   - `src/cached_generate.py` implements a **two-phase Prefill/Decode loop** with independent CUDA-synchronised TTFT and TPOT timers, driving `KVCache.from_model(model)` directly as the live cache object during benchmark execution.
 
 2. **Dynamic Request Scheduler & Queue Engine (`src/scheduler.py`):**
    - Implements an iteration-level request queue scheduler managing `SequenceState` lifecycles (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`).
    - **Interface Realism:** Manages dynamic in-flight request admission and completed request eviction. *Note for reviewers: Sequentially processes active sequences per step; tensor-level batch stacking across concurrent sequences is documented as a future kernel optimization.*
 3. **INT8 Weight-Only Quantization Tier (`src/quant_loader.py`):**
    - Integrates the industry-standard `bitsandbytes` library (`load_in_8bit=True`) to evaluate 8-bit weight matrix multiplication.
-   - **Interface Realism:** Serves as a quantized benchmark tier to profile VRAM footprint savings (-41.9% memory reduction) and dequantization trade-offs vs FP16.
+   - **Interface Realism:** Serves as a quantized benchmark tier to profile VRAM footprint savings (-42.1% memory reduction) and dequantization trade-offs vs FP16.
 
 ---
 
@@ -33,18 +32,18 @@
 
 | Phase | Serving System & Architecture | TTFT (1st Token) | TPOT (Decode Speed) | Aggregate Throughput | Peak VRAM | Complexity Scaling |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Phase 0** | HuggingFace `.generate()` Baseline | **61.81 ms** | **51.10 ms/tok** | **19.58 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (HF DynamicCache) |
-| **Phase 1** | Naive Generator (No Cache) | **58.60 ms** | **59.17 ms/tok** | **16.89 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
-| **Phase 2** | KV-Cache Generator Engine | **59.74 ms** | **51.87 ms/tok** | **19.23 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | Dynamic Request Scheduling (16-req wave) |
-| **Phase 4** | INT8 Quantized Model Engine | **351.61 ms** | **287.48 ms/tok** | **3.48 tok/s** | **1.68 GB** | 8-Bit Weights (-41.9% VRAM) |
-| **Phase 5** | Production Reference Engine | **69.95 ms** | **N/A (Concurrent)** | **16.42 tok/s** | **2.95 GB** | Fallback Scheduler (16-req wave) |
+| **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (HF DynamicCache) |
+| **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
+| **Phase 2** | KV-Cache Generator Engine | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
+| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **58.10 ms** | **N/A (Concurrent)** | **19.15 tok/s** | **2.96 GB** | Dynamic Request Scheduling (16-req wave) |
+| **Phase 4** | INT8 Quantized Model Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weights (-42.1% VRAM) |
+| **Phase 5** | Production Reference Engine | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | Fallback Scheduler (16-req wave) |
 
 [^1]: Phase 1 master row measured at canonical $N=64$ matching all phases. Under sequence length scaling up to $N=256$, naive TPOT degrades to **63.53 ms/tok** (+11% growth vs HF's +6%), demonstrating the $\mathcal{O}(N^2)$ re-computation penalty. See `analysis/plots/phase1_scaling_crossover.png`.
 
 > **Key Performance Milestones:**
-> - **KV-Caching Speedup:** Achieved **+13.9% generation throughput boost** over uncached naive generation (19.23 tok/s vs 16.89 tok/s) and reduced per-step decoding latency from 59.17 ms/tok down to a flat constant **51.87 ms/token**.
-> - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.89 GB down to 1.68 GB** (**-41.9% GPU memory savings**).
+> - **KV-Caching Speedup:** Achieved **+36.1% generation throughput boost** over uncached naive generation (21.30 tok/s vs 15.65 tok/s) and reduced per-step decoding latency from 69.52 ms/tok down to a flat constant **46.76 ms/token**.
+> - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.90 GB down to 1.68 GB** (**-42.1% GPU memory savings**).
 
 ---
 

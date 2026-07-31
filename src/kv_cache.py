@@ -1,16 +1,74 @@
 """
 MicroInfer - Phase 2: Key-Value (KV) Cache Store Module
 Provides pre-allocated CUDA tensor store for managing Key and Value attention projections across layers.
+Subclasses HuggingFace's Cache interface so it can be passed directly to model(..., past_key_values=...)
+while pre-allocating contiguous 5D CUDA tensors up front.
 """
 
 import torch
-from typing import Tuple
+from typing import Tuple, Optional, Any
+from transformers.cache_utils import Cache, CacheLayerMixin
 
 
-class KVCache:
+class KVCacheLayer(CacheLayerMixin):
+    """
+    Individual attention layer cache operating on a pre-allocated CUDA tensor slice.
+    """
+
+    is_sliding = False
+
+    def __init__(self, k_slice: torch.Tensor, v_slice: torch.Tensor):
+        super().__init__()
+        self.k_slice = k_slice  # (batch_size, num_kv_heads, max_seq_len, head_dim)
+        self.v_slice = v_slice  # (batch_size, num_kv_heads, max_seq_len, head_dim)
+        self._seq_len = 0
+        self.is_initialized = True
+
+    def lazy_initialization(self, key_states: torch.Tensor, value_states: torch.Tensor) -> None:
+        pass
+
+    def update(
+        self, key_states: torch.Tensor, value_states: torch.Tensor, *args, **kwargs
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        num_new_tokens = key_states.shape[2]
+        start_pos = self._seq_len
+        end_pos = start_pos + num_new_tokens
+
+        max_len = self.k_slice.shape[2]
+        if end_pos > max_len:
+            raise ValueError(
+                f"Exceeded max sequence length capacity! "
+                f"Current len ({self._seq_len}) + new tokens ({num_new_tokens}) > max_seq_len ({max_len})"
+            )
+
+        self.k_slice[:, :, start_pos:end_pos, :] = key_states
+        self.v_slice[:, :, start_pos:end_pos, :] = value_states
+        self._seq_len = end_pos
+        self._last_updated_len = end_pos
+
+        return self.k_slice[:, :, :end_pos, :], self.v_slice[:, :, :end_pos, :]
+
+    def get_mask_sizes(self, query_length: int) -> Tuple[int, int]:
+        return self._seq_len + query_length, 0
+
+    def get_seq_length(self) -> int:
+        return self._seq_len
+
+    def get_max_cache_shape(self) -> int:
+        return self.k_slice.shape[2]
+
+    def reset(self) -> None:
+        self._seq_len = 0
+        self._last_updated_len = None
+        self.k_slice.zero_()
+        self.v_slice.zero_()
+
+
+class KVCache(Cache):
     """
     Pre-allocated Key-Value cache tensor store for Transformer attention layers.
     Shape per cache: (num_layers, batch_size, num_kv_heads, max_seq_len, head_dim)
+    Implements HuggingFace's Cache interface while pre-allocating memory upfront.
     """
 
     def __init__(
@@ -30,57 +88,99 @@ class KVCache:
         self.batch_size = batch_size
         self.device = device
         self.dtype = dtype
-        self.current_len = 0
 
-        # Pre-allocate Key and Value cache tensors
+        # Pre-allocate Key and Value 5D cache tensors
         cache_shape = (num_layers, batch_size, num_kv_heads, max_seq_len, head_dim)
         self.k_cache = torch.zeros(cache_shape, device=device, dtype=dtype)
         self.v_cache = torch.zeros(cache_shape, device=device, dtype=dtype)
 
-    def update(self, layer_idx: int, new_k: torch.Tensor, new_v: torch.Tensor) -> None:
-        """
-        Inserts new Key and Value projections for a specific layer.
-        
-        Args:
-            layer_idx (int): Index of the attention layer (0 ... num_layers - 1).
-            new_k (torch.Tensor): Key tensor of shape (batch_size, num_kv_heads, num_new_tokens, head_dim).
-            new_v (torch.Tensor): Value tensor of shape (batch_size, num_kv_heads, num_new_tokens, head_dim).
-        """
-        num_new_tokens = new_k.shape[2]
-        end_pos = self.current_len + num_new_tokens
+        layers = [
+            KVCacheLayer(self.k_cache[i], self.v_cache[i])
+            for i in range(num_layers)
+        ]
+        super().__init__(layers=layers)
 
-        if end_pos > self.max_seq_len:
-            raise ValueError(
-                f"Exceeded max sequence length capacity! "
-                f"Current len ({self.current_len}) + new tokens ({num_new_tokens}) > max_seq_len ({self.max_seq_len})"
-            )
+    @property
+    def current_len(self) -> int:
+        if self.layers:
+            return self.layers[0].get_seq_length()
+        return 0
 
-        # Slice and assign into pre-allocated memory
-        self.k_cache[layer_idx, :, :, self.current_len : end_pos, :] = new_k
-        self.v_cache[layer_idx, :, :, self.current_len : end_pos, :] = new_v
+    @current_len.setter
+    def current_len(self, val: int) -> None:
+        for layer in self.layers:
+            layer._seq_len = val
+            layer._last_updated_len = None
+
+    def update(
+        self,
+        first_arg: Any = None,
+        second_arg: Any = None,
+        third_arg: Any = None,
+        layer_idx: Optional[int] = None,
+        new_k: Optional[torch.Tensor] = None,
+        new_v: Optional[torch.Tensor] = None,
+        key_states: Optional[torch.Tensor] = None,
+        value_states: Optional[torch.Tensor] = None,
+        *args,
+        **kwargs,
+    ) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
+        """
+        Supports both:
+        1. Legacy MicroInfer signature: update(layer_idx=0, new_k=k, new_v=v) or update(0, k, v)
+        2. HuggingFace Cache signature: update(key_states, value_states, layer_idx) or update(key_states=k, value_states=v, layer_idx=0)
+        """
+        # Keyword dispatch
+        if layer_idx is not None:
+            k_tensor = new_k if new_k is not None else key_states
+            v_tensor = new_v if new_v is not None else value_states
+            return self.layers[layer_idx].update(k_tensor, v_tensor, *args, **kwargs)
+
+        # Positional dispatch
+        if isinstance(first_arg, int):
+            # Legacy signature: update(layer_idx, new_k, new_v)
+            idx = first_arg
+            k_tensor = second_arg
+            v_tensor = third_arg
+            return self.layers[idx].update(k_tensor, v_tensor, *args, **kwargs)
+        elif first_arg is not None and second_arg is not None and isinstance(third_arg, int):
+            # HF signature: update(key_states, value_states, layer_idx)
+            k_tensor = first_arg
+            v_tensor = second_arg
+            idx = third_arg
+            return self.layers[idx].update(k_tensor, v_tensor, *args, **kwargs)
+        elif key_states is not None and value_states is not None:
+            idx = third_arg if third_arg is not None else (args[0] if args else 0)
+            return self.layers[idx].update(key_states, value_states, *args, **kwargs)
+
+        raise ValueError(f"Invalid parameters to KVCache.update: first_arg={type(first_arg)}, layer_idx={layer_idx}")
 
     def get(self, layer_idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Retrieves historical Key and Value tensors for a specific layer up to current_len.
-        
-        Returns:
-            tuple: (k_slice, v_slice) each of shape (batch_size, num_kv_heads, current_len, head_dim)
         """
-        k_slice = self.k_cache[layer_idx, :, :, : self.current_len, :]
-        v_slice = self.v_cache[layer_idx, :, :, : self.current_len, :]
+        seq_len = self.layers[layer_idx].get_seq_length()
+        k_slice = self.k_cache[layer_idx, :, :, :seq_len, :]
+        v_slice = self.v_cache[layer_idx, :, :, :seq_len, :]
         return k_slice, v_slice
 
     def advance(self, num_tokens: int = 1) -> None:
         """
-        Advances the sequence length pointer after completing layer updates for a step.
+        Advances sequence length pointer across layers if not already advanced during update.
         """
-        self.current_len += num_tokens
+        for layer in self.layers:
+            if getattr(layer, "_last_updated_len", None) == layer._seq_len:
+                pass
+            else:
+                layer._seq_len += num_tokens
+            layer._last_updated_len = None
 
     def reset(self) -> None:
         """
-        Resets cache pointer and clears stored tensors.
+        Resets cache pointers and clears stored tensors.
         """
-        self.current_len = 0
+        for layer in self.layers:
+            layer.reset()
         self.k_cache.zero_()
         self.v_cache.zero_()
 
@@ -91,6 +191,39 @@ class KVCache:
         bytes_k = self.k_cache.element_size() * self.k_cache.nelement()
         bytes_v = self.v_cache.element_size() * self.v_cache.nelement()
         return round((bytes_k + bytes_v) / (1024 ** 2), 2)
+
+    @classmethod
+    def from_model(
+        cls,
+        model: torch.nn.Module,
+        max_seq_len: int = 2048,
+        batch_size: int = 1,
+        device: Optional[str] = None,
+        dtype: Optional[torch.dtype] = None,
+    ) -> "KVCache":
+        """
+        Constructs a pre-allocated KVCache instance matching a HuggingFace model config.
+        """
+        config = model.config
+        num_layers = getattr(config, "num_hidden_layers", getattr(config, "n_layer", 28))
+        num_kv_heads = getattr(config, "num_key_value_heads", getattr(config, "n_head", 2))
+        hidden_size = getattr(config, "hidden_size", getattr(config, "n_embd", 1536))
+        num_attn_heads = getattr(config, "num_attention_heads", getattr(config, "n_head", 12))
+        head_dim = hidden_size // num_attn_heads
+
+        param = next(model.parameters(), None)
+        target_device = device if device is not None else (str(param.device) if param is not None else "cuda")
+        target_dtype = dtype if dtype is not None else (param.dtype if param is not None else torch.float16)
+
+        return cls(
+            num_layers=num_layers,
+            num_kv_heads=num_kv_heads,
+            head_dim=head_dim,
+            max_seq_len=max_seq_len,
+            batch_size=batch_size,
+            device=target_device,
+            dtype=target_dtype,
+        )
 
 
 if __name__ == "__main__":

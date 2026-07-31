@@ -4,39 +4,156 @@
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
   "max_new_tokens": 64,
-  "concurrent_requests_per_wave": 2,
-  "num_warmup_waves": 1,
-  "num_timed_waves": 1,
-  "peak_vram_gb": 2.89,
+  "concurrent_requests_per_wave": 16,
+  "num_warmup_waves": 3,
+  "num_timed_waves": 10,
+  "peak_vram_gb": 2.96,
   "honest_note": "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). Active sequences are stepped in an iteration loop. True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack (B, T) inputs \u2014 this is a documented next step.",
   "aggregate": {
     "throughput_tok_per_sec": {
-      "mean": 18.57,
-      "p50": 18.57,
-      "p99": 18.57
+      "mean": 19.15,
+      "p50": 19.26,
+      "p99": 20.06
     },
     "ttft_ms": {
-      "mean": 76.17
+      "mean": 58.1
     },
     "request_latency_ms": {
-      "mean": 3443.87,
-      "p50": 3443.87,
-      "p99": 3443.87
+      "mean": 3345.43,
+      "p50": 3321.8,
+      "p99": 3610.91
     }
   },
   "wave_results": [
     {
       "wave": 1,
-      "n_completed": 2,
-      "total_tokens": 128,
-      "wall_time_s": 6.892,
-      "aggregate_throughput": 18.57,
-      "mean_ttft_ms": 76.17,
-      "p50_ttft_ms": 76.17,
-      "p99_ttft_ms": 81.04,
-      "mean_latency_ms": 3443.87,
-      "p50_latency_ms": 3443.87,
-      "p99_latency_ms": 3452.35
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 57.872,
+      "aggregate_throughput": 17.69,
+      "mean_ttft_ms": 58.49,
+      "p50_ttft_ms": 57.16,
+      "p99_ttft_ms": 71.68,
+      "mean_latency_ms": 3614.8,
+      "p50_latency_ms": 3602.31,
+      "p99_latency_ms": 3725.17
+    },
+    {
+      "wave": 2,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 57.179,
+      "aggregate_throughput": 17.91,
+      "mean_ttft_ms": 59.92,
+      "p50_ttft_ms": 59.38,
+      "p99_ttft_ms": 67.27,
+      "mean_latency_ms": 3571.53,
+      "p50_latency_ms": 3568.91,
+      "p99_latency_ms": 3637.56
+    },
+    {
+      "wave": 3,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 52.981,
+      "aggregate_throughput": 19.33,
+      "mean_ttft_ms": 56.97,
+      "p50_ttft_ms": 55.9,
+      "p99_ttft_ms": 63.55,
+      "mean_latency_ms": 3309.3,
+      "p50_latency_ms": 3310.22,
+      "p99_latency_ms": 3347.42
+    },
+    {
+      "wave": 4,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 53.381,
+      "aggregate_throughput": 19.18,
+      "mean_ttft_ms": 56.16,
+      "p50_ttft_ms": 56.15,
+      "p99_ttft_ms": 59.34,
+      "mean_latency_ms": 3334.3,
+      "p50_latency_ms": 3335.11,
+      "p99_latency_ms": 3400.47
+    },
+    {
+      "wave": 5,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 53.445,
+      "aggregate_throughput": 19.16,
+      "mean_ttft_ms": 61.93,
+      "p50_ttft_ms": 61.48,
+      "p99_ttft_ms": 66.23,
+      "mean_latency_ms": 3338.26,
+      "p50_latency_ms": 3344.27,
+      "p99_latency_ms": 3373.65
+    },
+    {
+      "wave": 6,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 54.65,
+      "aggregate_throughput": 18.74,
+      "mean_ttft_ms": 59.1,
+      "p50_ttft_ms": 57.42,
+      "p99_ttft_ms": 67.73,
+      "mean_latency_ms": 3413.51,
+      "p50_latency_ms": 3412.1,
+      "p99_latency_ms": 3500.59
+    },
+    {
+      "wave": 7,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 52.038,
+      "aggregate_throughput": 19.68,
+      "mean_ttft_ms": 57.04,
+      "p50_ttft_ms": 56.77,
+      "p99_ttft_ms": 61.09,
+      "mean_latency_ms": 3250.42,
+      "p50_latency_ms": 3256.08,
+      "p99_latency_ms": 3279.73
+    },
+    {
+      "wave": 8,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 51.661,
+      "aggregate_throughput": 19.82,
+      "mean_ttft_ms": 56.58,
+      "p50_ttft_ms": 56.62,
+      "p99_ttft_ms": 58.91,
+      "mean_latency_ms": 3226.82,
+      "p50_latency_ms": 3228.07,
+      "p99_latency_ms": 3263.82
+    },
+    {
+      "wave": 9,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 51.025,
+      "aggregate_throughput": 20.07,
+      "mean_ttft_ms": 58.92,
+      "p50_ttft_ms": 55.5,
+      "p99_ttft_ms": 81.77,
+      "mean_latency_ms": 3187.13,
+      "p50_latency_ms": 3184.58,
+      "p99_latency_ms": 3245.68
+    },
+    {
+      "wave": 10,
+      "n_completed": 16,
+      "total_tokens": 1024,
+      "wall_time_s": 51.363,
+      "aggregate_throughput": 19.94,
+      "mean_ttft_ms": 55.93,
+      "p50_ttft_ms": 56.08,
+      "p99_ttft_ms": 57.17,
+      "mean_latency_ms": 3208.2,
+      "p50_latency_ms": 3211.87,
+      "p99_latency_ms": 3251.48
     }
   ]
 }

@@ -4,49 +4,23 @@ MicroInfer - Phase 2: Incremental KV-Cache Generation Engine
 
 WHAT WE ACTUALLY OWN IN THIS FILE
 -----------------------------------
-HuggingFace's `model(input_ids=..., past_key_values=..., use_cache=True)` API
-stores attention key/value projections inside a `DynamicCache` object that lives
-*outside* the model weights — it grows one decode step at a time without the
-model being aware.  This module's contribution is **the generation loop and
-timing infrastructure that drives that cache correctly**:
+This module drives a two-phase (Prefill + Decode) autoregressive generation loop
+using MicroInfer's custom pre-allocated 5D CUDA tensor store (`KVCache` in `src/kv_cache.py`).
 
-    1. It explicitly separates the Prefill step (full prompt → one forward pass)
-       from the Decode steps (1 token at a time), a two-phase discipline that
-       vanilla `model.generate()` hides inside C++/Rust internals.
+1. It explicitly separates the Prefill step (full prompt → one forward pass)
+   from Decode steps (1 token at a time).
 
-    2. It measures TTFT and TPOT independently with CUDA-synchronised wall-clock
-       timers, rather than relying on transformers' own aggregate timer.
+2. It measures TTFT and TPOT independently with CUDA-synchronised wall-clock
+   timers.
 
-    3. It manages the `DynamicCache` lifecycle manually — instantiate, pass in,
-       let HF grow it — which is equivalent to how a production serving engine
-       like vLLM or TRT-LLM manages its own cache object per sequence slot.
-
-WHAT HUGGINGFACE PROVIDES
---------------------------
-- The actual K/V tensor storage (DynamicCache, backed by a Python list of tuples
-  of CUDA tensors, one per layer, growing with each decoded token).
-- The attention kernel that reads those tensors during each forward pass.
-
-WHY NOT THE CUSTOM KVCache CLASS (src/kv_cache.py)?
-----------------------------------------------------
-`src/kv_cache.py` implements a pre-allocated 5-D CUDA tensor store
-`(num_layers, batch, num_kv_heads, max_seq_len, head_dim)` that owns its own
-memory up front (no Python list growth).  Wiring it *directly* into the model's
-attention layers would require monkey-patching each layer's forward() method —
-an interesting but model-architecture-specific exercise.  That path is noted as
-an open design question in the Phase 2 spec (PHASE2_SPEC.md, line 106) and in
-ANALYSIS.md.  This file deliberately keeps the loop clean and the claim honest.
-
-Open engineering question (not hidden): what would it take to use KVCache here?
-    → Patch Qwen2Attention.forward() to read/write self._kv_store (our object)
-      instead of the DynamicCache.  Requires matching (batch, heads, seq, dim)
-      slice indexing to the model's exact layout.  Doable; left as next step.
+3. It manages the `KVCache` lifecycle manually — pre-allocating contiguous
+   5D CUDA tensors up front and updating layer slices during model execution.
 """
 
 import time
 import torch
 from typing import Any, Dict
-from transformers.cache_utils import DynamicCache
+from src.kv_cache import KVCache
 
 
 def cached_generate(
@@ -57,23 +31,17 @@ def cached_generate(
     temperature: float = 0.0,  # 0.0 = greedy decoding
 ) -> Dict[str, Any]:
     """
-    Two-phase KV-cache generation loop.
+    Two-phase KV-cache generation loop using MicroInfer's pre-allocated KVCache.
 
     Phase A — Prefill
         Run the full prompt through the model in one forward pass.
-        DynamicCache is populated with K/V projections for all prompt tokens.
+        KVCache is populated with K/V projections for all prompt tokens.
         Time to first token (TTFT) is measured here.
 
     Phase B — Decode
-        Feed one new token per step; DynamicCache carries forward all previous
-        K/V projections so each attention call is O(1) in context length.
+        Feed one new token per step; KVCache carries forward all previous
+        K/V projections in pre-allocated memory so each attention call is O(1).
         Per-token time (TPOT) is the mean over all decode steps.
-
-    MicroInfer's contribution:
-        - Explicit two-phase separation with independent CUDA-synchronised timers.
-        - Manual DynamicCache lifecycle management (instantiate once, reuse).
-        - Returns a structured dict with TTFT, TPOT, throughput, and per-step
-          latency list for downstream analysis and plotting.
 
     Args:
         model:          HuggingFace AutoModelForCausalLM on CUDA or CPU.
@@ -93,10 +61,9 @@ def cached_generate(
     prompt_ids = inputs.input_ids
     prompt_len = prompt_ids.shape[1]
 
-    # --- MicroInfer owns: cache object instantiation & lifecycle ---
-    # HuggingFace provides: the DynamicCache data structure and the attention
-    # kernel that reads from it on every forward pass.
-    past_key_values = DynamicCache()
+    # Pre-allocate KVCache upfront matching model architecture
+    max_capacity = prompt_len + max_new_tokens + 64
+    past_key_values = KVCache.from_model(model, max_seq_len=max_capacity, batch_size=1)
 
     step_times = []
     generated_tokens = []
@@ -111,7 +78,7 @@ def cached_generate(
         outputs = model(
             input_ids=prompt_ids,        # shape (1, prompt_len)
             past_key_values=past_key_values,
-            use_cache=True,              # instructs HF to populate past_key_values
+            use_cache=True,
         )
         next_token_logits = outputs.logits[:, -1, :]  # last token position
 
@@ -133,8 +100,6 @@ def cached_generate(
 
     # ------------------------------------------------------------------ #
     # Phase B: Decode — one token per step, O(1) attention per step       #
-    # Each call to model() reads cached K/V via DynamicCache;             #
-    # attention cost does NOT grow with context length here.              #
     # ------------------------------------------------------------------ #
     for step in range(1, max_new_tokens):
         if next_token.item() == tokenizer.eos_token_id:
@@ -142,8 +107,6 @@ def cached_generate(
 
         t_step_start = time.perf_counter()
         with torch.no_grad():
-            # Feed ONLY the single new token (shape 1×1).
-            # DynamicCache supplies all prior K/V; no re-computation occurs.
             outputs = model(
                 input_ids=current_input,         # shape (1, 1)
                 past_key_values=past_key_values,
@@ -198,9 +161,5 @@ if __name__ == "__main__":
         max_new_tokens=32,
     )
     print("\n--- Cached Generation Output ---")
-    print(res["output_text"])
-    print(
-        f"\nTTFT: {res['ttft_ms']} ms | "
-        f"TPOT: {res['tpot_ms']} ms/tok | "
-        f"Throughput: {res['throughput_tok_per_sec']} tok/s"
-    )
+    print(f"Output: '{res['output_text']}'")
+    print(f"TTFT: {res['ttft_ms']} ms | TPOT: {res['tpot_ms']} ms/tok | Throughput: {res['throughput_tok_per_sec']} tok/s")

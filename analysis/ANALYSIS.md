@@ -10,27 +10,27 @@
 
 | Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/sec) | Peak VRAM (GB) | Performance Scaling Model |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Phase 0** | HuggingFace `.generate()` Baseline | **61.81 ms** | **51.10 ms/tok** | **19.58 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in DynamicCache) |
-| **Phase 1** | Naive Generator (No Cache) | **58.60 ms** | **59.17 ms/tok** | **16.89 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
-| **Phase 2** | KV-Cache Generator | **59.74 ms** | **51.87 ms/tok** | **19.23 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **59.54 ms** | **N/A (Concurrent)** | **19.53 tok/s** | **2.92 GB** | Dynamic Request Scheduling (16-req wave) |
-| **Phase 4** | INT8 Quantized Engine | **351.61 ms** | **287.48 ms/tok** | **3.48 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-41.9% VRAM) |
-| **Phase 5** | Production Reference Engine | **69.95 ms** | **N/A (Concurrent)** | **16.42 tok/s** | **2.95 GB** | Fallback Scheduler (16-req wave) |
+| **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in DynamicCache) |
+| **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
+| **Phase 2** | KV-Cache Generator | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
+| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **58.10 ms** | **N/A (Concurrent)** | **19.15 tok/s** | **2.96 GB** | Dynamic Request Scheduling (16-req wave) |
+| **Phase 4** | INT8 Quantized Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-42.1% VRAM) |
+| **Phase 5** | Production Reference Engine | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | Fallback Scheduler (16-req wave) |
 
 ---
 
 ## Anomalies & Gap Analysis
 
 ### 1. Phase 2 (KV-Cache) vs Phase 3 (Scheduler) & Phase 5 (Fallback) Concurrency Throughput
-- **Observed Result:** Phase 2 single-request KV-cache generation achieves **19.23 tok/s**, while Phase 3 scheduler achieves **19.53 tok/s** under 16 concurrent requests and Phase 5 fallback achieves **16.42 tok/s**.
+- **Observed Result:** Phase 2 single-request KV-cache generation achieves **21.30 tok/s**, while Phase 3 scheduler achieves **19.15 tok/s** under 16 concurrent requests and Phase 5 fallback achieves **12.57 tok/s**.
 - **Likely Mechanism:** In `src/scheduler.py`, active sequences are stepped in a Python `for seq in self.running_batch:` loop rather than stacked into a single batched CUDA tensor matrix multiplication (`(B, 1)` GEMM). Each step loop pays Python interpreter dispatch overhead and executes individual PyTorch forward calls per sequence. Thus, under concurrent load, aggregate throughput is capped near single-request throughput, and individual request latency scales with batch size (~3.2s per 16-request wave).
 
 ### 2. INT8 Quantization (Phase 4) Latency Penalty on Consumer Hardware
-- **Observed Result:** INT8 weight quantization saves **-41.9% VRAM** (1.68 GB vs 2.89 GB), but TPOT increases from **51.87 ms/tok to 287.48 ms/tok** (~5.5x latency slowdown).
+- **Observed Result:** INT8 weight quantization saves **-42.1% VRAM** (1.68 GB vs 2.90 GB), but TPOT increases from **46.76 ms/tok to 272.82 ms/tok** (~5.8x latency slowdown).
 - **Likely Mechanism:** `bitsandbytes` 8-bit quantization on consumer Ada Lovelace GPUs (RTX 4050 Laptop) performs runtime weight dequantization and 8-bit matrix multiplication without fused FP16-INT8 Tensor Core kernels. On small batch sizes ($B=1$), the overhead of casting and dynamically scaling 8-bit weight matrices dominates overall execution time compared to native FP16 cuBLAS GEMMs.
 
 ### 3. Naive (Phase 1) vs HF Baseline (Phase 0) TTFT Delta
-- **Observed Result:** Phase 1 naive single-token forward pass TTFT (**58.60 ms**) is slightly lower than Phase 0 HuggingFace baseline TTFT (**61.81 ms**).
+- **Observed Result:** Phase 1 naive single-token forward pass TTFT (**59.24 ms**) is slightly higher than or close to Phase 0 HuggingFace baseline TTFT (**58.83 ms**).
 - **Likely Mechanism:** HuggingFace `.generate()` executes additional Python framework logic before and during the first token pass (GenerationConfig validation, LogitsProcessor pipeline setup, stopping criteria wrappers), whereas Phase 1 executes a direct, raw PyTorch `model(input_ids)` forward pass.
 
 ---
