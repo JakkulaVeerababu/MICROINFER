@@ -1,5 +1,5 @@
 """
-MicroInfer - Phase 5: Production Reference Engine Benchmark Harness
+MicroInfer - Phase 5: Concurrent Load Benchmark (Fallback Scheduler)
 
 Canonical conditions shared with all other phases:
   - Same 3 prompts, same max_new_tokens=64
@@ -8,18 +8,23 @@ Canonical conditions shared with all other phases:
   - Reports mean/p50/p99 latency and aggregate throughput
   - Raw per-request data logged to benchmarks/results/phase5_raw.json
 
-ABOUT THIS HARNESS:
-  If native vLLM is installed, requests are batched through vLLM's
-  LLM.generate() API which handles PagedAttention internally.
+ABOUT vLLM ON THIS MACHINE:
+  vLLM v0.26.0 installs successfully via pip on Windows, but fails at
+  import time with:
 
-  If vLLM is NOT installed (the common case on a laptop), this harness
-  uses the same ContinuousBatchScheduler as Phase 3 but with the
-  CANONICAL concurrency conditions.  NO synthetic multipliers are applied.
-  The results represent real measured numbers on this hardware.
+      ModuleNotFoundError: No module named 'vllm._C_stable_libtorch'
 
-  IMPORTANT: Any numbers produced by the fallback path are labelled
-  "reference-engine (no vLLM)" in the output JSON, NOT "vLLM".
-  We do not fabricate PagedAttention speedups.
+  This is a Windows-specific build limitation. vLLM's native CUDA
+  extension (_C_stable_libtorch) is compiled for Linux only. Running
+  on WSL2 or a native Linux host will activate the real vLLM path
+  (LLM.generate() with PagedAttention) in this same script.
+
+FALLBACK PATH (what actually runs here):
+  Uses MicroInfer ContinuousBatchScheduler (same as Phase 3) under
+  identical concurrency conditions: 16 concurrent requests per wave,
+  10 timed waves. NO synthetic multipliers. All numbers are measured.
+  Results are labelled "fallback-scheduler (vLLM unavailable: Windows)"
+  in the output JSON and are NOT presented as vLLM/PagedAttention numbers.
 """
 
 import sys
@@ -203,7 +208,7 @@ def _run_fallback(model, tokenizer, device, max_new_tokens,
         print(f"  Req latency  : mean={w['mean_latency_ms']:.1f}ms  "
               f"p50={w['p50_latency_ms']:.1f}ms  p99={w['p99_latency_ms']:.1f}ms\n")
 
-    return wave_results, all_raw_requests, "reference-engine (no vLLM)"
+    return wave_results, all_raw_requests, "fallback-scheduler (vLLM unavailable: Windows — _C_stable_libtorch missing)"
 
 
 # ---------------------------------------------------------------------------
@@ -288,8 +293,15 @@ def run_vllm_benchmark(
         wave_records.append(rec)
 
     export_data = {
-        "phase": "Phase 5 - Production Reference Engine",
+        "phase": "Phase 5 - Fallback Scheduler Under Concurrent Load",
         "engine": engine_label,
+        "vllm_available": vllm_available,
+        "vllm_unavailability_reason": (
+            "vLLM 0.26.0 installed on Windows but fails to import: "
+            "ModuleNotFoundError: No module named 'vllm._C_stable_libtorch'. "
+            "This CUDA extension is Linux-only. Run on WSL2 or native Linux "
+            "to activate the real vLLM PagedAttention path."
+        ) if not vllm_available else None,
         "model_id": model_id,
         "device": device,
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU",

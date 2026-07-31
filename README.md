@@ -1,6 +1,6 @@
 # MicroInfer
 
-> **A From-Scratch LLM Inference Engine & Production vLLM Benchmarking Suite**  
+> **A From-Scratch LLM Inference Engine — KV-Cache, Continuous Batching & INT8 Quantization**  
 > *Built with PyTorch, CUDA 12.1, and Transformers on NVIDIA GeForce RTX 4050 Laptop GPU (6GB VRAM)*
 
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
@@ -36,13 +36,16 @@
 | **Phase 2** | KV-Cache Generator Engine | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
 | **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **58.10 ms** | **N/A (Concurrent)** | **19.15 tok/s** | **2.96 GB** | Dynamic Request Scheduling (16-req wave) |
 | **Phase 4** | INT8 Quantized Model Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weights (-42.1% VRAM) |
-| **Phase 5** | Production Reference Engine | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | Fallback Scheduler (16-req wave) |
+| **Phase 5** | Fallback Scheduler Under Concurrent Load (vLLM unavailable on Windows — see note) | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | MicroInfer ContinuousBatchScheduler (16-req wave) |
 
 [^1]: Phase 1 master row measured at canonical $N=64$ matching all phases. Under sequence length scaling up to $N=256$, naive TPOT degrades to **63.53 ms/tok** (+11% growth vs HF's +6%), demonstrating the $\mathcal{O}(N^2)$ re-computation penalty. See `analysis/plots/phase1_scaling_crossover.png`.
 
 > **Key Performance Milestones:**
 > - **KV-Caching Speedup:** Achieved **+36.1% generation throughput boost** over uncached naive generation (21.30 tok/s vs 15.65 tok/s) and reduced per-step decoding latency from 69.52 ms/tok down to a flat constant **46.76 ms/token**.
 > - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.90 GB down to 1.68 GB** (**-42.1% GPU memory savings**).
+
+> [!NOTE]
+> **Phase 5 — vLLM Availability:** vLLM v0.26.0 was installed successfully via pip on this Windows machine (RTX 4050, 6GB VRAM), but **fails to import at runtime** with `ModuleNotFoundError: No module named 'vllm._C_stable_libtorch'`. This is a known Windows-specific limitation: vLLM's CUDA extension (`_C_stable_libtorch`) is compiled only for Linux and requires either WSL2 or a native Linux environment. The vLLM `LLM.generate()` path in `benchmarks/baseline_vllm.py` is fully wired and will activate automatically if vLLM becomes importable — run `python benchmarks/baseline_vllm.py` on Linux/WSL2 to get real PagedAttention numbers. Phase 5 results above reflect the fallback `ContinuousBatchScheduler` under identical 16-request concurrent load conditions.
 
 ---
 
