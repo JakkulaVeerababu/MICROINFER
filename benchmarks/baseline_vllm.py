@@ -74,7 +74,7 @@ def _percentile(data: list, p: float) -> float:
 def _run_vllm(model_id, max_new_tokens, num_warmup, concurrent_requests, num_waves):
     from vllm import LLM, SamplingParams  # type: ignore
 
-    llm = LLM(model=model_id, trust_remote_code=True, gpu_memory_utilization=0.85)
+    llm = LLM(model=model_id, trust_remote_code=True, gpu_memory_utilization=0.75, max_model_len=4096)
     sampling_params = SamplingParams(temperature=0.0, max_tokens=max_new_tokens)
 
     # Build a batch of `concurrent_requests` prompts (round-robin across BENCHMARK_PROMPTS)
@@ -293,7 +293,7 @@ def run_vllm_benchmark(
         wave_records.append(rec)
 
     export_data = {
-        "phase": "Phase 5 - Fallback Scheduler Under Concurrent Load",
+        "phase": "Phase 5 - Production Reference Engine (vLLM PagedAttention)" if vllm_available else "Phase 5 - Fallback Scheduler Under Concurrent Load",
         "engine": engine_label,
         "vllm_available": vllm_available,
         "vllm_unavailability_reason": (
