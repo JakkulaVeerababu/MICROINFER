@@ -1,0 +1,81 @@
+{
+  "total_cpu_ms": 2484.773,
+  "total_cuda_ms": 2484.78,
+  "cpu_pct": 50.0,
+  "cuda_pct": 50.0,
+  "top_ops": [
+    {
+      "op_name": "aten::copy_",
+      "calls": 2674,
+      "self_cpu_ms": 874.538,
+      "self_cuda_ms": 699.193,
+      "cuda_pct": 28.14
+    },
+    {
+      "op_name": "phase4_int8_decode_step",
+      "calls": 5,
+      "self_cpu_ms": 861.15,
+      "self_cuda_ms": 629.268,
+      "cuda_pct": 25.32
+    },
+    {
+      "op_name": "aten::empty_strided",
+      "calls": 2395,
+      "self_cpu_ms": 75.816,
+      "self_cuda_ms": 283.544,
+      "cuda_pct": 11.41
+    },
+    {
+      "op_name": "aten::mm",
+      "calls": 565,
+      "self_cpu_ms": 34.791,
+      "self_cuda_ms": 121.75,
+      "cuda_pct": 4.9
+    },
+    {
+      "op_name": "aten::to",
+      "calls": 8241,
+      "self_cpu_ms": 49.606,
+      "self_cuda_ms": 104.625,
+      "cuda_pct": 4.21
+    },
+    {
+      "op_name": "aten::_to_copy",
+      "calls": 2395,
+      "self_cpu_ms": 96.278,
+      "self_cuda_ms": 78.535,
+      "cuda_pct": 3.16
+    },
+    {
+      "op_name": "aten::addmm",
+      "calls": 420,
+      "self_cpu_ms": 36.01,
+      "self_cuda_ms": 54.764,
+      "cuda_pct": 2.2
+    },
+    {
+      "op_name": "aten::as_strided",
+      "calls": 4708,
+      "self_cpu_ms": 5.587,
+      "self_cuda_ms": 42.26,
+      "cuda_pct": 1.7
+    },
+    {
+      "op_name": "aten::transpose",
+      "calls": 2110,
+      "self_cpu_ms": 39.424,
+      "self_cuda_ms": 40.268,
+      "cuda_pct": 1.62
+    },
+    {
+      "op_name": "aten::linear",
+      "calls": 985,
+      "self_cpu_ms": 50.598,
+      "self_cuda_ms": 38.993,
+      "cuda_pct": 1.57
+    }
+  ],
+  "phase": "Phase 4 - INT8 Decode",
+  "profiled_steps": 5,
+  "note": "Profiled 5 steady-state INT8 decode steps. Look for ops containing 'int8', 'dequant', or 'mm' to identify quantization overhead."
+}

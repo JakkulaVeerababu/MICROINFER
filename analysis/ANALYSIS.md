@@ -21,19 +21,88 @@
 
 ## Anomalies & Gap Analysis
 
+> **Profiler methodology:** All op breakdowns below come from `torch.profiler.profile(activities=[CPU, CUDA])` run around isolated decode steps on a warmed-up model. Python-vs-CUDA timing splits use a model.forward() wrapper-injection technique (not repro'd internal logic). GPU utilization is sampled via `nvidia-smi --query-gpu=utilization.gpu`. Raw JSON summaries and Chrome traces are in `analysis/profiles/` and are loadable in `chrome://tracing`.
+>
+> Profiler script: `python analysis/profile_phases.py`
+
+---
+
 ### 1. Phase 2 (KV-Cache) vs Phase 3 (Batched Scheduler) Concurrency Throughput
-- **Observed Result:** Phase 2 single-request KV-cache generation achieves **21.30 tok/s**, while Phase 3 / Phase 5 tensor-batched scheduler achieves **22.81 tok/s** under 16 concurrent requests.
-- **Likely Mechanism:** In `src/scheduler.py`, all active decode sequences in the running batch are gathered into a single 2D input matrix `(B, 1)` and past KV-cache states are stacked into a batched `DynamicCache` instance. The GPU executes a single batched GEMM forward pass per decode step across all $B$ sequences in parallel. This eliminates Python loop overhead and leverages Tensor Core parallelism, enabling concurrent throughput (**22.81 tok/s**) to surpass single-stream KV-cache generation (**21.30 tok/s**).
+
+- **Observed Result:** Phase 2 single-request KV-cache generation achieves **21.30 tok/s**, while Phase 3 tensor-batched scheduler achieves **22.81 tok/s** under 16 concurrent requests — a modest +7.1% improvement despite serving 16 simultaneous sequences.
+
+#### Profiler Evidence (`analysis/profiles/phase3_python_vs_cuda.json`, `phase3_profiler_summary.json`)
+
+**Step wall-clock breakdown (5 profiled decode steps, batch=4 sequences):**
+
+| Component | Mean (ms) | % of step |
+|:---|:---:|:---:|
+| Python overhead (scheduler bookkeeping, KV-cache prep) | **403.3 ms** | **57.2%** |
+| CUDA model.forward() + cuda.synchronize() | **301.2 ms** | **42.8%** |
+| **Total scheduler step** | **704.5 ms** | 100% |
+
+**Profiler op breakdown — Phase 3 vs Phase 2 (same 5 steps, sorted by CUDA time):**
+
+| Op | Phase 2 calls | Phase 2 CUDA (ms) | Phase 3 calls | Phase 3 CUDA (ms) | Ratio |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| `aten::slice` | 3,960 | 156.1 ms | 20,780 | 809.8 ms | **5.19×** |
+| `aten::as_strided` | 6,950 | 113.4 ms | 26,110 | 442.0 ms | 3.90× |
+| `aten::copy_` | 1,145 | 56.2 ms | 3,135 | 184.1 ms | 3.28× |
+| `aten::mm` (matmul) | 565 | 120.6 ms | 565 | 134.0 ms | 1.11× |
+
+**GPU SM Utilization (nvidia-smi, 16-request wave, `gpu_util_phase3.csv`):**
+
+| Metric | Value |
+|:---|:---:|
+| Mean GPU SM utilization | **36.1%** |
+| Peak GPU SM utilization | **49%** |
+| Minimum GPU SM utilization | **22%** |
+| Samples collected | 10 |
+
+**Conclusion (supported by profiler):** The Phase 3 per-step scheduler overhead is not primarily CUDA-bound — **57.2% of each step's wall-clock time is spent in Python-level bookkeeping**. The `aten::slice` call count grows 5.19× vs Phase 2 (20,780 vs 3,960 over 5 steps), directly measuring the per-sequence KV-cache slice extraction loop that runs across all 28 transformer layers and all B active sequences before each forward pass. This explains why concurrent throughput only improves marginally over single-sequence KV-cache: the Python scheduler loop and per-sequence KV stacking negate most of the GPU parallelism gained from serving multiple sequences. The 36.1% mean GPU SM utilization during the 16-request wave quantifies the GPU idle time — the GPU is waiting for Python to prepare the next batch for approximately 60% of wall-clock time.
+
+---
 
 ### 2. INT8 Quantization (Phase 4) Latency Penalty on Consumer Hardware
-- **Observed Result:** INT8 weight quantization saves **-42.1% VRAM** (1.68 GB vs 2.90 GB), but TPOT increases from **46.76 ms/tok to 272.82 ms/tok** (~5.8x latency slowdown).
-- **Likely Mechanism:** `bitsandbytes` 8-bit quantization on consumer Ada Lovelace GPUs (RTX 4050 Laptop) performs runtime weight dequantization and 8-bit matrix multiplication without fused FP16-INT8 Tensor Core kernels. On small batch sizes ($B=1$), the overhead of casting and dynamically scaling 8-bit weight matrices dominates overall execution time compared to native FP16 cuBLAS GEMMs.
+
+- **Observed Result:** INT8 weight quantization saves **-42.1% VRAM** (1.68 GB vs 2.90 GB), but TPOT increases from **46.76 ms/tok to 272.82 ms/tok** (~5.8× latency slowdown).
+
+#### Profiler Evidence (`analysis/profiles/phase4_profiler_summary.json`, `phase2_profiler_summary.json`)
+
+**Top ops by self-CUDA time — Phase 4 INT8 vs Phase 2 FP16 (5 decode steps each):**
+
+| Op | Phase 2 CUDA (ms) | Phase 2 % | Phase 4 CUDA (ms) | Phase 4 % | Change |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| `aten::copy_` | 56.2 ms | 3.47% | **699.2 ms** | **28.14%** | **+12.4×** |
+| `aten::empty_strided` | — | — | **283.5 ms** | **11.41%** | new |
+| `aten::to` (dtype cast) | — | — | **104.6 ms** | **4.21%** | new |
+| `aten::_to_copy` | — | — | **78.5 ms** | **3.16%** | new |
+| `aten::mm` (actual matmul) | **120.6 ms** | 7.46% | **121.75 ms** | **4.90%** | **+1.0%** |
+
+**Dequantization pipeline total (Phase 4, 5 steps):**
+
+| Pipeline stage | CUDA time | Notes |
+|:---|:---:|:---|
+| `aten::copy_` (INT8→FP16 weight copy) | 699.2 ms | 28.14% of all CUDA time |
+| `aten::empty_strided` (temp FP16 buffer alloc) | 283.5 ms | 11.41% |
+| `aten::to` / `aten::_to_copy` (dtype conversion) | 183.2 ms | 7.37% |
+| **Dequant pipeline total** | **1,165.9 ms** | **46.9% of all Phase 4 CUDA time** |
+| `aten::mm` (FP16 matmul after dequant) | 121.75 ms | 4.90% — **same as Phase 2** |
+
+**Conclusion (supported by profiler):** The latency penalty is not caused by slower matrix multiplication. `aten::mm` CUDA time is **nearly identical** between Phase 2 (120.6 ms) and Phase 4 (121.75 ms, +1.0%), confirming that the FP16 cuBLAS GEMM kernel itself runs at the same speed. The 5.8× TPOT increase is caused by the `bitsandbytes` INT8 dequantization pipeline: before every linear layer forward pass, each INT8-stored weight matrix must be (1) allocated into a temporary FP16 buffer (`aten::empty_strided`), (2) copied and type-converted from INT8 → FP16 (`aten::copy_` + `aten::_to_copy` + `aten::to`), and (3) passed to the standard FP16 cuBLAS GEMM (`aten::mm`). The dequantization pipeline alone consumes **46.9% of all Phase 4 CUDA kernel time** across 5 steps, compared to Phase 2's total `aten::copy_` time of only 56.2 ms (3.47%). On Ada Lovelace consumer GPUs (RTX 4050), there are no hardware-fused INT8 Tensor Core kernels available via `bitsandbytes` for this model size and configuration, so every linear layer pays the full dequant overhead on every decode step.
+
+---
 
 ### 3. Naive (Phase 1) vs HF Baseline (Phase 0) TTFT Delta
-- **Observed Result:** Phase 1 naive single-token forward pass TTFT (**59.24 ms**) is slightly higher than or close to Phase 0 HuggingFace baseline TTFT (**58.83 ms**).
-- **Likely Mechanism:** HuggingFace `.generate()` executes additional Python framework logic before and during the first token pass (GenerationConfig validation, LogitsProcessor pipeline setup, stopping criteria wrappers), whereas Phase 1 executes a direct, raw PyTorch `model(input_ids)` forward pass.
+
+- **Observed Result:** Phase 1 naive single-token forward pass TTFT (**59.24 ms**) is slightly higher than Phase 0 HuggingFace baseline TTFT (**58.83 ms**) — a +0.7% difference.
+- **Note:** This gap is within measurement noise for a single forward pass (~60 ms) and no profiler trace was collected for this anomaly because the delta (0.41 ms) is smaller than the typical profiler overhead itself. The claim here is observational, not profiler-verified, and the difference should not be over-interpreted.
+- **Most likely explanation:** HuggingFace `model.generate()` internally initializes its `GenerationConfig`, `LogitsProcessor` list, and stopping criteria wrappers on the first call. These are one-time Python costs amortized across the full generation, but they occur before the first forward pass and inflate the apparent TTFT when both pipelines are measured cold. Phase 1's raw `model(input_ids)` call has no such framework initialization.
+
+---
 
 ### 4. INT8 Quantization (Phase 4) Accuracy / Perplexity Impact
+
 - **Measured Result:** Sliding-window perplexity on a held-out 321-token Wikipedia corpus (General Relativity article, CC BY-SA 3.0) gives:
   - **FP16 Perplexity: 3.6960** | **INT8 Perplexity: 3.7150** | **Delta: +0.0191 (+0.52%)**
 - **Verdict: NEGLIGIBLE** — the INT8 weight quantization degrades perplexity by less than 0.02 absolute points on this out-of-distribution factual corpus.
@@ -42,6 +111,7 @@
 - **Script:** `python benchmarks/quant_accuracy.py` | **Output:** `benchmarks/results/phase4_accuracy.json`
 
 ---
+
 
 ## Phase 1 vs Phase 0: O(N²) Scaling Sweep — Full Side-by-Side Crossover Table
 
@@ -145,3 +215,18 @@ Weight quantization reduces memory allocation from **2.89 GB down to 1.68 GB** (
 - **Phase 3 Data:** [benchmarks/results/phase3_scheduler.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase3_scheduler.json)
 - **Phase 4 Data:** [benchmarks/results/phase4_quant.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase4_quant.json)
 - **Phase 5 Data:** [benchmarks/results/phase5_vllm.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase5_vllm.json)
+- **INT8 Accuracy:** [benchmarks/results/phase4_accuracy.json](file:///c:/Users/LENOVO/Desktop/MICROINFER/benchmarks/results/phase4_accuracy.json)
+
+### Profiler Artifacts (`analysis/profiles/`)
+| File | Contents |
+|:---|:---|
+| `phase2_profiler_summary.json` | Op breakdown for 5 Phase 2 KV-cache decode steps |
+| `phase2_trace.json` | Chrome trace — load in `chrome://tracing` |
+| `phase3_profiler_summary.json` | Op breakdown for 5 Phase 3 scheduler decode steps |
+| `phase3_python_vs_cuda.json` | Python overhead vs CUDA forward timing split (5 steps) |
+| `phase3_trace.json` | Chrome trace for Phase 3 |
+| `gpu_util_phase3.csv` | nvidia-smi GPU SM utilization samples during 16-request wave |
+| `phase4_profiler_summary.json` | Op breakdown for 5 Phase 4 INT8 decode steps (dequant ops visible) |
+| `phase4_trace.json` | Chrome trace for Phase 4 |
+| `all_phases_summary.json` | Combined profiler output across all three phases |
+

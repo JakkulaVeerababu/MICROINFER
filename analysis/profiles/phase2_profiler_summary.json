@@ -1,0 +1,67 @@
+{
+  "total_cpu_ms": 1616.622,
+  "total_cuda_ms": 1616.672,
+  "cpu_pct": 50.0,
+  "cuda_pct": 50.0,
+  "top_ops": [
+    {
+      "op_name": "phase2_decode_step",
+      "calls": 5,
+      "self_cpu_ms": 607.962,
+      "self_cuda_ms": 392.745,
+      "cuda_pct": 24.29
+    },
+    {
+      "op_name": "aten::slice",
+      "calls": 3960,
+      "self_cpu_ms": 152.372,
+      "self_cuda_ms": 156.083,
+      "cuda_pct": 9.65
+    },
+    {
+      "op_name": "aten::mm",
+      "calls": 565,
+      "self_cpu_ms": 48.401,
+      "self_cuda_ms": 120.598,
+      "cuda_pct": 7.46
+    },
+    {
+      "op_name": "aten::as_strided",
+      "calls": 6950,
+      "self_cpu_ms": 14.828,
+      "self_cuda_ms": 113.387,
+      "cuda_pct": 7.01
+    },
+    {
+      "op_name": "aten::transpose",
+      "calls": 2110,
+      "self_cpu_ms": 74.596,
+      "self_cuda_ms": 77.684,
+      "cuda_pct": 4.81
+    },
+    {
+      "op_name": "aten::linear",
+      "calls": 985,
+      "self_cpu_ms": 94.948,
+      "self_cuda_ms": 67.419,
+      "cuda_pct": 4.17
+    },
+    {
+      "op_name": "aten::mul",
+      "calls": 1280,
+      "self_cpu_ms": 54.596,
+      "self_cuda_ms": 65.343,
+      "cuda_pct": 4.04
+    },
+    {
+      "op_name": "aten::copy_",
+      "calls": 1145,
+      "self_cpu_ms": 42.861,
+      "self_cuda_ms": 56.171,
+      "cuda_pct": 3.47
+    }
+  ],
+  "phase": "Phase 2 - KV-Cache Decode",
+  "profiled_steps": 5,
+  "note": "Profiled 5 steady-state decode steps (1-token input, KV-cache populated). CPU time includes Python dispatch overhead; CUDA time is kernel execution only."
+}

@@ -1,0 +1,27 @@
+{
+  "phase": "Phase 3 - Scheduler Python vs CUDA Timing",
+  "batch_size": 4,
+  "profiled_steps": 5,
+  "mean_python_overhead_ms": 403.27,
+  "mean_cuda_forward_ms": 301.21,
+  "mean_total_step_ms": 704.48,
+  "python_pct_of_step": 57.24,
+  "cuda_forward_pct_of_step": 42.76,
+  "per_step_raw": {
+    "python_ms": [
+      380.312,
+      406.242,
+      433.174,
+      394.675,
+      401.95
+    ],
+    "cuda_forward_ms": [
+      297.333,
+      300.854,
+      325.177,
+      293.075,
+      289.611
+    ]
+  },
+  "method": "Python overhead = sched.step() wall-clock minus model.forward() time. CUDA forward = model.forward() wall-clock including cuda.synchronize(). Batch size = 4 concurrent sequences."
+}

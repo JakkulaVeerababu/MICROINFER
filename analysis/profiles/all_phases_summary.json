@@ -1,0 +1,250 @@
+{
+  "phase2": {
+    "total_cpu_ms": 1616.622,
+    "total_cuda_ms": 1616.672,
+    "cpu_pct": 50.0,
+    "cuda_pct": 50.0,
+    "top_ops": [
+      {
+        "op_name": "phase2_decode_step",
+        "calls": 5,
+        "self_cpu_ms": 607.962,
+        "self_cuda_ms": 392.745,
+        "cuda_pct": 24.29
+      },
+      {
+        "op_name": "aten::slice",
+        "calls": 3960,
+        "self_cpu_ms": 152.372,
+        "self_cuda_ms": 156.083,
+        "cuda_pct": 9.65
+      },
+      {
+        "op_name": "aten::mm",
+        "calls": 565,
+        "self_cpu_ms": 48.401,
+        "self_cuda_ms": 120.598,
+        "cuda_pct": 7.46
+      },
+      {
+        "op_name": "aten::as_strided",
+        "calls": 6950,
+        "self_cpu_ms": 14.828,
+        "self_cuda_ms": 113.387,
+        "cuda_pct": 7.01
+      },
+      {
+        "op_name": "aten::transpose",
+        "calls": 2110,
+        "self_cpu_ms": 74.596,
+        "self_cuda_ms": 77.684,
+        "cuda_pct": 4.81
+      },
+      {
+        "op_name": "aten::linear",
+        "calls": 985,
+        "self_cpu_ms": 94.948,
+        "self_cuda_ms": 67.419,
+        "cuda_pct": 4.17
+      },
+      {
+        "op_name": "aten::mul",
+        "calls": 1280,
+        "self_cpu_ms": 54.596,
+        "self_cuda_ms": 65.343,
+        "cuda_pct": 4.04
+      },
+      {
+        "op_name": "aten::copy_",
+        "calls": 1145,
+        "self_cpu_ms": 42.861,
+        "self_cuda_ms": 56.171,
+        "cuda_pct": 3.47
+      }
+    ],
+    "phase": "Phase 2 - KV-Cache Decode",
+    "profiled_steps": 5,
+    "note": "Profiled 5 steady-state decode steps (1-token input, KV-cache populated). CPU time includes Python dispatch overhead; CUDA time is kernel execution only."
+  },
+  "phase3_profiler": {
+    "total_cpu_ms": 3520.586,
+    "total_cuda_ms": 3521.634,
+    "cpu_pct": 49.99,
+    "cuda_pct": 50.01,
+    "top_ops": [
+      {
+        "op_name": "phase3_scheduler_step",
+        "calls": 5,
+        "self_cpu_ms": 1516.326,
+        "self_cuda_ms": 938.19,
+        "cuda_pct": 26.64
+      },
+      {
+        "op_name": "aten::slice",
+        "calls": 20780,
+        "self_cpu_ms": 794.043,
+        "self_cuda_ms": 809.809,
+        "cuda_pct": 23.0
+      },
+      {
+        "op_name": "aten::as_strided",
+        "calls": 26110,
+        "self_cpu_ms": 52.929,
+        "self_cuda_ms": 442.016,
+        "cuda_pct": 12.55
+      },
+      {
+        "op_name": "aten::copy_",
+        "calls": 3135,
+        "self_cpu_ms": 137.982,
+        "self_cuda_ms": 184.131,
+        "cuda_pct": 5.23
+      },
+      {
+        "op_name": "aten::mm",
+        "calls": 565,
+        "self_cpu_ms": 55.341,
+        "self_cuda_ms": 134.029,
+        "cuda_pct": 3.81
+      },
+      {
+        "op_name": "aten::select",
+        "calls": 2325,
+        "self_cpu_ms": 96.515,
+        "self_cuda_ms": 97.336,
+        "cuda_pct": 2.76
+      },
+      {
+        "op_name": "aten::transpose",
+        "calls": 2110,
+        "self_cpu_ms": 76.991,
+        "self_cuda_ms": 92.131,
+        "cuda_pct": 2.62
+      },
+      {
+        "op_name": "aten::mul",
+        "calls": 1280,
+        "self_cpu_ms": 56.265,
+        "self_cuda_ms": 74.452,
+        "cuda_pct": 2.11
+      }
+    ],
+    "phase": "Phase 3 - Scheduler Decode",
+    "profiled_steps": 5,
+    "batch_size": 4
+  },
+  "phase3_timing": {
+    "phase": "Phase 3 - Scheduler Python vs CUDA Timing",
+    "batch_size": 4,
+    "profiled_steps": 5,
+    "mean_python_overhead_ms": 403.27,
+    "mean_cuda_forward_ms": 301.21,
+    "mean_total_step_ms": 704.48,
+    "python_pct_of_step": 57.24,
+    "cuda_forward_pct_of_step": 42.76,
+    "per_step_raw": {
+      "python_ms": [
+        380.312,
+        406.242,
+        433.174,
+        394.675,
+        401.95
+      ],
+      "cuda_forward_ms": [
+        297.333,
+        300.854,
+        325.177,
+        293.075,
+        289.611
+      ]
+    },
+    "method": "Python overhead = sched.step() wall-clock minus model.forward() time. CUDA forward = model.forward() wall-clock including cuda.synchronize(). Batch size = 4 concurrent sequences."
+  },
+  "phase3_gpu_util": {
+    "mean_gpu_util_pct": 36.1,
+    "max_gpu_util_pct": 49,
+    "min_gpu_util_pct": 22,
+    "n_samples": 10
+  },
+  "phase4": {
+    "total_cpu_ms": 2484.773,
+    "total_cuda_ms": 2484.78,
+    "cpu_pct": 50.0,
+    "cuda_pct": 50.0,
+    "top_ops": [
+      {
+        "op_name": "aten::copy_",
+        "calls": 2674,
+        "self_cpu_ms": 874.538,
+        "self_cuda_ms": 699.193,
+        "cuda_pct": 28.14
+      },
+      {
+        "op_name": "phase4_int8_decode_step",
+        "calls": 5,
+        "self_cpu_ms": 861.15,
+        "self_cuda_ms": 629.268,
+        "cuda_pct": 25.32
+      },
+      {
+        "op_name": "aten::empty_strided",
+        "calls": 2395,
+        "self_cpu_ms": 75.816,
+        "self_cuda_ms": 283.544,
+        "cuda_pct": 11.41
+      },
+      {
+        "op_name": "aten::mm",
+        "calls": 565,
+        "self_cpu_ms": 34.791,
+        "self_cuda_ms": 121.75,
+        "cuda_pct": 4.9
+      },
+      {
+        "op_name": "aten::to",
+        "calls": 8241,
+        "self_cpu_ms": 49.606,
+        "self_cuda_ms": 104.625,
+        "cuda_pct": 4.21
+      },
+      {
+        "op_name": "aten::_to_copy",
+        "calls": 2395,
+        "self_cpu_ms": 96.278,
+        "self_cuda_ms": 78.535,
+        "cuda_pct": 3.16
+      },
+      {
+        "op_name": "aten::addmm",
+        "calls": 420,
+        "self_cpu_ms": 36.01,
+        "self_cuda_ms": 54.764,
+        "cuda_pct": 2.2
+      },
+      {
+        "op_name": "aten::as_strided",
+        "calls": 4708,
+        "self_cpu_ms": 5.587,
+        "self_cuda_ms": 42.26,
+        "cuda_pct": 1.7
+      },
+      {
+        "op_name": "aten::transpose",
+        "calls": 2110,
+        "self_cpu_ms": 39.424,
+        "self_cuda_ms": 40.268,
+        "cuda_pct": 1.62
+      },
+      {
+        "op_name": "aten::linear",
+        "calls": 985,
+        "self_cpu_ms": 50.598,
+        "self_cuda_ms": 38.993,
+        "cuda_pct": 1.57
+      }
+    ],
+    "phase": "Phase 4 - INT8 Decode",
+    "profiled_steps": 5,
+    "note": "Profiled 5 steady-state INT8 decode steps. Look for ops containing 'int8', 'dequant', or 'mm' to identify quantization overhead."
+  }
+}

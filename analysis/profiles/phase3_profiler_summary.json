@@ -1,0 +1,67 @@
+{
+  "total_cpu_ms": 3520.586,
+  "total_cuda_ms": 3521.634,
+  "cpu_pct": 49.99,
+  "cuda_pct": 50.01,
+  "top_ops": [
+    {
+      "op_name": "phase3_scheduler_step",
+      "calls": 5,
+      "self_cpu_ms": 1516.326,
+      "self_cuda_ms": 938.19,
+      "cuda_pct": 26.64
+    },
+    {
+      "op_name": "aten::slice",
+      "calls": 20780,
+      "self_cpu_ms": 794.043,
+      "self_cuda_ms": 809.809,
+      "cuda_pct": 23.0
+    },
+    {
+      "op_name": "aten::as_strided",
+      "calls": 26110,
+      "self_cpu_ms": 52.929,
+      "self_cuda_ms": 442.016,
+      "cuda_pct": 12.55
+    },
+    {
+      "op_name": "aten::copy_",
+      "calls": 3135,
+      "self_cpu_ms": 137.982,
+      "self_cuda_ms": 184.131,
+      "cuda_pct": 5.23
+    },
+    {
+      "op_name": "aten::mm",
+      "calls": 565,
+      "self_cpu_ms": 55.341,
+      "self_cuda_ms": 134.029,
+      "cuda_pct": 3.81
+    },
+    {
+      "op_name": "aten::select",
+      "calls": 2325,
+      "self_cpu_ms": 96.515,
+      "self_cuda_ms": 97.336,
+      "cuda_pct": 2.76
+    },
+    {
+      "op_name": "aten::transpose",
+      "calls": 2110,
+      "self_cpu_ms": 76.991,
+      "self_cuda_ms": 92.131,
+      "cuda_pct": 2.62
+    },
+    {
+      "op_name": "aten::mul",
+      "calls": 1280,
+      "self_cpu_ms": 56.265,
+      "self_cuda_ms": 74.452,
+      "cuda_pct": 2.11
+    }
+  ],
+  "phase": "Phase 3 - Scheduler Decode",
+  "profiled_steps": 5,
+  "batch_size": 4
+}
