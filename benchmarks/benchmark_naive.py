@@ -33,7 +33,6 @@ SPEC COMPLIANCE (PHASE1_SPEC.md):
 import sys
 import json
 import time
-import statistics
 from pathlib import Path
 
 import torch
@@ -42,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.model_loader import load_model_and_tokenizer, DEFAULT_MODEL_ID
 from src.naive_generate import naive_generate
+from benchmarks.bench_stats import compute_stats, flag_outliers
 
 # ---------------------------------------------------------------------------
 # Canonical benchmark constants -- identical across all six phase harnesses
@@ -62,16 +62,6 @@ SCALING_N_VALUES = [64, 256, 512, 1024, 2048]
 # Timed runs per (N, engine) pair in the scaling sweep (1 run for large N sweep)
 SCALING_TIMED_RUNS = 1
 
-
-def _percentile(data: list, p: float) -> float:
-    if not data:
-        return 0.0
-    data_sorted = sorted(data)
-    idx = (p / 100.0) * (len(data_sorted) - 1)
-    lo = int(idx)
-    hi = min(lo + 1, len(data_sorted) - 1)
-    frac = idx - lo
-    return data_sorted[lo] * (1 - frac) + data_sorted[hi] * frac
 
 
 # ---------------------------------------------------------------------------
@@ -155,21 +145,19 @@ def run_naive_benchmark(
             for s in range(num_steps)
         ]
 
-        mean_ttft = statistics.mean(run_ttfts)
-        p50_ttft  = _percentile(run_ttfts, 50)
-        p99_ttft  = _percentile(run_ttfts, 99)
-        mean_tpot = statistics.mean(run_tpots)
-        p50_tpot  = _percentile(run_tpots, 50)
-        p99_tpot  = _percentile(run_tpots, 99)
-        mean_tp   = statistics.mean(run_throughputs)
-        p50_tp    = _percentile(run_throughputs, 50)
-        p99_tp    = _percentile(run_throughputs, 99)
+        ttft_stats = compute_stats(run_ttfts)
+        tpot_stats = compute_stats(run_tpots)
+        tp_stats   = compute_stats(run_throughputs)
+
+        flag_outliers(run_ttfts, "TTFT (ms)")
+        flag_outliers(run_tpots, "TPOT (ms)")
+        flag_outliers(run_throughputs, "Throughput (t/s)")
 
         print(f"  Input Tokens : {res['prompt_tokens']}")
         print(f"  Output Tokens: {res['generated_tokens']}")
-        print(f"  TTFT          mean={mean_ttft:.1f}ms  p50={p50_ttft:.1f}ms  p99={p99_ttft:.1f}ms")
-        print(f"  TPOT          mean={mean_tpot:.2f}ms  p50={p50_tpot:.2f}ms  p99={p99_tpot:.2f}ms")
-        print(f"  Throughput    mean={mean_tp:.2f} t/s  p50={p50_tp:.2f} t/s  p99={p99_tp:.2f} t/s")
+        print(f"  TTFT          mean={ttft_stats['mean']:.1f}ms ± {ttft_stats['std']:.1f}ms  p50={ttft_stats['p50']:.1f}ms  p99={ttft_stats['p99']:.1f}ms")
+        print(f"  TPOT          mean={tpot_stats['mean']:.2f}ms ± {tpot_stats['std']:.2f}ms  p50={tpot_stats['p50']:.2f}ms  p99={tpot_stats['p99']:.2f}ms")
+        print(f"  Throughput    mean={tp_stats['mean']:.2f} ± {tp_stats['std']:.2f} t/s  p50={tp_stats['p50']:.2f} t/s  p99={tp_stats['p99']:.2f} t/s")
         print(f"  Step 1 latency (no prior KV):  {avg_step_times[0]:.2f} ms")
         if num_steps > 1:
             print(f"  Step {num_steps} latency (full KV recompute): {avg_step_times[-1]:.2f} ms  <- quadratic penalty")
@@ -180,9 +168,9 @@ def run_naive_benchmark(
             "prompt": prompt,
             "input_tokens": res["prompt_tokens"],
             "output_tokens": res["generated_tokens"],
-            "ttft_ms":  {"mean": round(mean_ttft,2), "p50": round(p50_ttft,2), "p99": round(p99_ttft,2)},
-            "tpot_ms":  {"mean": round(mean_tpot,2), "p50": round(p50_tpot,2), "p99": round(p99_tpot,2)},
-            "throughput_tok_per_sec": {"mean": round(mean_tp,2), "p50": round(p50_tp,2), "p99": round(p99_tp,2)},
+            "ttft_ms":  ttft_stats,
+            "tpot_ms":  tpot_stats,
+            "throughput_tok_per_sec": tp_stats,
             "per_step_latency_ms": avg_step_times,
         })
 
@@ -331,15 +319,23 @@ def run_naive_scaling_benchmark(
                 hf_tpots.append(hf["tpot_ms"])
                 hf_tps.append(hf["throughput_tok_per_sec"])
 
-            naive_mean_ttft = statistics.mean(naive_ttfts)
-            naive_mean_tpot = statistics.mean(naive_tpots)
-            hf_mean_ttft    = statistics.mean(hf_ttfts)
-            hf_mean_tpot    = statistics.mean(hf_tpots)
+            naive_ttft_stats = compute_stats(naive_ttfts)
+            naive_tpot_stats = compute_stats(naive_tpots)
+            naive_tp_stats = compute_stats(naive_tps)
+
+            hf_ttft_stats = compute_stats(hf_ttfts)
+            hf_tpot_stats = compute_stats(hf_tpots)
+            hf_tp_stats = compute_stats(hf_tps)
+
+            naive_mean_ttft = naive_ttft_stats["mean"]
+            naive_mean_tpot = naive_tpot_stats["mean"]
+            hf_mean_ttft    = hf_ttft_stats["mean"]
+            hf_mean_tpot    = hf_tpot_stats["mean"]
 
             print(f"  Naive  TTFT={naive_mean_ttft:.1f}ms  TPOT={naive_mean_tpot:.2f}ms/tok"
-                  f"  TP={statistics.mean(naive_tps):.2f} t/s")
+                  f"  TP={naive_tp_stats['mean']:.2f} t/s")
             print(f"  HF     TTFT={hf_mean_ttft:.1f}ms    TPOT={hf_mean_tpot:.2f}ms/tok"
-                  f"  TP={statistics.mean(hf_tps):.2f} t/s")
+                  f"  TP={hf_tp_stats['mean']:.2f} t/s")
 
             faster = "Naive" if naive_mean_tpot < hf_mean_tpot else "HF"
             ratio  = max(naive_mean_tpot, hf_mean_tpot) / max(min(naive_mean_tpot, hf_mean_tpot), 0.01)
@@ -348,22 +344,14 @@ def run_naive_scaling_benchmark(
             scaling_rows.append({
                 "N": N,
                 "naive": {
-                    "ttft_ms":              {"mean": round(naive_mean_ttft, 2),
-                                             "p50":  round(_percentile(naive_ttfts, 50), 2),
-                                             "p99":  round(_percentile(naive_ttfts, 99), 2)},
-                    "tpot_ms":             {"mean": round(naive_mean_tpot, 2),
-                                             "p50":  round(_percentile(naive_tpots, 50), 2),
-                                             "p99":  round(_percentile(naive_tpots, 99), 2)},
-                    "throughput_tok_per_sec": round(statistics.mean(naive_tps), 2),
+                    "ttft_ms":              naive_ttft_stats,
+                    "tpot_ms":              naive_tpot_stats,
+                    "throughput_tok_per_sec": naive_tp_stats["mean"],
                 },
                 "hf_baseline": {
-                    "ttft_ms":              {"mean": round(hf_mean_ttft, 2),
-                                             "p50":  round(_percentile(hf_ttfts, 50), 2),
-                                             "p99":  round(_percentile(hf_ttfts, 99), 2)},
-                    "tpot_ms":             {"mean": round(hf_mean_tpot, 2),
-                                             "p50":  round(_percentile(hf_tpots, 50), 2),
-                                             "p99":  round(_percentile(hf_tpots, 99), 2)},
-                    "throughput_tok_per_sec": round(statistics.mean(hf_tps), 2),
+                    "ttft_ms":              hf_ttft_stats,
+                    "tpot_ms":              hf_tpot_stats,
+                    "throughput_tok_per_sec": hf_tp_stats["mean"],
                 },
             })
         except Exception as e:

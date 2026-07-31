@@ -3,72 +3,81 @@
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
-  "max_new_tokens": 10,
+  "max_new_tokens": 64,
   "num_warmup_runs": 3,
-  "num_timed_runs": 1,
+  "num_timed_runs": 10,
   "peak_vram_gb": 2.89,
   "results": [
     {
       "prompt_idx": 1,
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
-      "output_tokens": 10,
+      "output_tokens": 64,
       "ttft_ms": {
-        "mean": 50.44,
-        "p50": 50.44,
-        "p99": 50.44
+        "mean": 84.44,
+        "std": 5.75,
+        "p50": 85.39,
+        "p99": 92.13
       },
       "tpot_ms": {
-        "mean": 43.34,
-        "p50": 43.34,
-        "p99": 43.34
+        "mean": 81.12,
+        "std": 1.79,
+        "p50": 81.37,
+        "p99": 83.57
       },
       "throughput_tok_per_sec": {
-        "mean": 23.08,
-        "p50": 23.08,
-        "p99": 23.08
+        "mean": 12.33,
+        "std": 0.28,
+        "p50": 12.29,
+        "p99": 12.96
       }
     },
     {
       "prompt_idx": 2,
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
-      "output_tokens": 10,
+      "output_tokens": 64,
       "ttft_ms": {
-        "mean": 44.82,
-        "p50": 44.82,
-        "p99": 44.82
+        "mean": 68.24,
+        "std": 16.34,
+        "p50": 71.72,
+        "p99": 88.98
       },
       "tpot_ms": {
-        "mean": 44.91,
-        "p50": 44.91,
-        "p99": 44.91
+        "mean": 69.81,
+        "std": 18.06,
+        "p50": 80.12,
+        "p99": 82.66
       },
       "throughput_tok_per_sec": {
-        "mean": 22.27,
-        "p50": 22.27,
-        "p99": 22.27
+        "mean": 15.53,
+        "std": 5.19,
+        "p50": 12.48,
+        "p99": 24.23
       }
     },
     {
       "prompt_idx": 3,
       "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
       "input_tokens": 23,
-      "output_tokens": 10,
+      "output_tokens": 64,
       "ttft_ms": {
-        "mean": 122.98,
-        "p50": 122.98,
-        "p99": 122.98
+        "mean": 83.59,
+        "std": 15.44,
+        "p50": 86.24,
+        "p99": 97.41
       },
       "tpot_ms": {
-        "mean": 47.06,
-        "p50": 47.06,
-        "p99": 47.06
+        "mean": 77.16,
+        "std": 9.27,
+        "p50": 79.93,
+        "p99": 83.24
       },
       "throughput_tok_per_sec": {
-        "mean": 21.25,
-        "p50": 21.25,
-        "p99": 21.25
+        "mean": 13.19,
+        "std": 2.11,
+        "p50": 12.51,
+        "p99": 18.51
       }
     }
   ]

@@ -30,7 +30,6 @@ FALLBACK PATH (what actually runs here):
 import sys
 import json
 import time
-import statistics
 from pathlib import Path
 
 import torch
@@ -39,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.model_loader import load_model_and_tokenizer, DEFAULT_MODEL_ID
 from src.cached_generate import cached_generate
+from benchmarks.bench_stats import compute_stats, flag_outliers
 
 # ---------------------------------------------------------------------------
 # Canonical benchmark constants -- identical across all six phase harnesses
@@ -56,16 +56,6 @@ NUM_TIMED_RUNS      = 10     # used when running sequentially (no vLLM)
 CONCURRENT_REQUESTS = 16     # simultaneous requests per wave (vLLM or fallback)
 NUM_WAVES           = 10     # timed waves for concurrency path
 
-
-def _percentile(data: list, p: float) -> float:
-    if not data:
-        return 0.0
-    data_sorted = sorted(data)
-    idx = (p / 100.0) * (len(data_sorted) - 1)
-    lo = int(idx)
-    hi = min(lo + 1, len(data_sorted) - 1)
-    frac = idx - lo
-    return data_sorted[lo] * (1 - frac) + data_sorted[hi] * frac
 
 
 # ---------------------------------------------------------------------------
@@ -186,17 +176,20 @@ def _run_fallback(model, tokenizer, device, max_new_tokens,
                 "total_latency_ms": round(s.total_time_ms, 2),
             })
 
+        ttft_stats = compute_stats(ttfts)
+        lat_stats = compute_stats(latencies)
+
         wave_results.append({
             "n_completed":          len(seqs),
             "total_tokens":         total_tokens,
             "wall_time_s":          wall_s,
             "aggregate_throughput": aggregate_tp,
-            "mean_ttft_ms":         statistics.mean(ttfts) if ttfts else 0.0,
-            "p50_ttft_ms":          _percentile(ttfts, 50),
-            "p99_ttft_ms":          _percentile(ttfts, 99),
-            "mean_latency_ms":      statistics.mean(latencies) if latencies else 0.0,
-            "p50_latency_ms":       _percentile(latencies, 50),
-            "p99_latency_ms":       _percentile(latencies, 99),
+            "mean_ttft_ms":         ttft_stats["mean"],
+            "p50_ttft_ms":          ttft_stats["p50"],
+            "p99_ttft_ms":          ttft_stats["p99"],
+            "mean_latency_ms":      lat_stats["mean"],
+            "p50_latency_ms":       lat_stats["p50"],
+            "p99_latency_ms":       lat_stats["p99"],
         })
         w = wave_results[-1]
         print(f"  Completed    : {w['n_completed']} requests")
@@ -264,9 +257,9 @@ def run_vllm_benchmark(
 
     # Aggregate across waves
     all_throughputs = [w["aggregate_throughput"] for w in wave_results]
-    mean_tp = statistics.mean(all_throughputs)
-    p50_tp  = _percentile(all_throughputs, 50)
-    p99_tp  = _percentile(all_throughputs, 99)
+    tp_stats = compute_stats(all_throughputs)
+    
+    flag_outliers(all_throughputs, "Wave Throughput (t/s)")
 
     peak_vram_gb = 0.0
     if torch.cuda.is_available():
@@ -274,7 +267,7 @@ def run_vllm_benchmark(
 
     print("--- Aggregate across all waves ---")
     print(f"  Engine              : {engine_label}")
-    print(f"  Aggregate Throughput: mean={mean_tp:.2f} t/s  p50={p50_tp:.2f} t/s  p99={p99_tp:.2f} t/s")
+    print(f"  Aggregate Throughput: mean={tp_stats['mean']:.2f} ± {tp_stats['std']:.2f} t/s  p50={tp_stats['p50']:.2f} t/s  p99={tp_stats['p99']:.2f} t/s")
     print(f"  Peak VRAM           : {peak_vram_gb:.2f} GB")
 
     output_dir = Path(__file__).parent / "results"
@@ -316,7 +309,7 @@ def run_vllm_benchmark(
             "concurrency load as Phase 3. Results are directly comparable."
         ),
         "aggregate": {
-            "throughput_tok_per_sec": {"mean": round(mean_tp,2), "p50": round(p50_tp,2), "p99": round(p99_tp,2)},
+            "throughput_tok_per_sec": tp_stats,
         },
         "wave_results": wave_records,
     }

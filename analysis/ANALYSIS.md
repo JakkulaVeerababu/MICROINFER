@@ -59,6 +59,20 @@
 | Minimum GPU SM utilization | **22%** |
 | Samples collected | 10 |
 
+### 2. Realistic Workloads (Staggered Arrivals vs Static Batching)
+
+- **Static Wave Limitation:** While Phase 3 handles concurrent waves, real LLM serving APIs do not receive 16 requests at the exact same millisecond. If a static batcher waits for 16 requests, it incurs a massive latency penalty for the first request.
+- **Staggered Arrival Performance:** When 8 requests of heavily varying lengths (4 to 256 tokens) were submitted at staggered intervals over a 3.5s window, the continuous batcher maintained a throughput of **40.29 tok/s**.
+- **Queue Defragmentation:** Because the continuous scheduler iteration loop evaluates `SequenceState` every step, it successfully evicts the short requests (e.g. 4 and 8 tokens) within milliseconds of them finishing, immediately freeing the `max_batch_size` slot and VRAM for the incoming requests arriving at $t=1.5s$ and $t=2.0s$. A static batcher would have locked the batch until the 256-token request finished.
+
+### 3. VRAM Capacity Ceiling (6GB RTX 4050)
+
+To determine the true theoretical limits of this engine, we exponentially ramped batch sizes to intentionally force a `CUDA out of memory` failure.
+- **Base Allocation:** The FP16 `Qwen2.5-1.5B` model consumes exactly **2.88 GB** of VRAM natively before any sequence memory is allocated.
+- **Dynamic VRAM Delta:** Measuring peak VRAM at exactly 512 and 1024 sequences revealed a precise differential cost of **2.22 MB per active sequence** (storing the 5D `KVCache` KV tensors for maximum token bounds).
+- **Windows Paging Interference:** The strict hardware VRAM limit is 6GB. However, on Windows 11 with WDDM 3.0, PyTorch seamlessly spilled the 2048-sequence wave into unified system RAM without crashing (Peak Allocation: 7.40 GB). 
+- **Strict Hardware Ceiling:** Restricting the math to the physical 6GB limit: `(6.0 GB - 2.88 GB) / 2.22 MB = ~1,439 sequences`. This is the maximum concurrent sequences the 6GB device can handle before suffering severe PCI-e offload latency penalties.
+
 **Conclusion (supported by profiler):** The Phase 3 per-step scheduler overhead is not primarily CUDA-bound — **57.2% of each step's wall-clock time is spent in Python-level bookkeeping**. The `aten::slice` call count grows 5.19× vs Phase 2 (20,780 vs 3,960 over 5 steps), directly measuring the per-sequence KV-cache slice extraction loop that runs across all 28 transformer layers and all B active sequences before each forward pass. This explains why concurrent throughput only improves marginally over single-sequence KV-cache: the Python scheduler loop and per-sequence KV stacking negate most of the GPU parallelism gained from serving multiple sequences. The 36.1% mean GPU SM utilization during the 16-request wave quantifies the GPU idle time — the GPU is waiting for Python to prepare the next batch for approximately 60% of wall-clock time.
 
 ---

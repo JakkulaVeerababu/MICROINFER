@@ -13,36 +13,40 @@
   ],
   "num_timed_runs_per_n": 1,
   "master_table_N": 2048,
-  "crossover_N": 64,
+  "crossover_N": 512,
   "scaling_rows": [
     {
       "N": 64,
       "naive": {
         "ttft_ms": {
-          "mean": 57.31,
-          "p50": 56.35,
-          "p99": 65.91
+          "mean": 80.84,
+          "std": 0.0,
+          "p50": 80.84,
+          "p99": 80.84
         },
         "tpot_ms": {
-          "mean": 57.12,
-          "p50": 57.46,
-          "p99": 58.57
+          "mean": 79.67,
+          "std": 0.0,
+          "p50": 79.67,
+          "p99": 79.67
         },
-        "throughput_tok_per_sec": 17.51,
+        "throughput_tok_per_sec": 12.53,
         "tpot_delta_pct": 0.0
       },
       "hf_baseline": {
         "ttft_ms": {
-          "mean": 63.09,
-          "p50": 57.24,
-          "p99": 91.1
+          "mean": 84.44,
+          "std": 0.0,
+          "p50": 84.44,
+          "p99": 84.44
         },
         "tpot_ms": {
-          "mean": 50.18,
-          "p50": 51.48,
-          "p99": 51.91
+          "mean": 81.6,
+          "std": 0.0,
+          "p50": 81.6,
+          "p99": 81.6
         },
-        "throughput_tok_per_sec": 19.93,
+        "throughput_tok_per_sec": 12.25,
         "tpot_delta_pct": 0.0
       }
     },
@@ -50,124 +54,140 @@
       "N": 256,
       "naive": {
         "ttft_ms": {
-          "mean": 57.0,
-          "p50": 57.0,
-          "p99": 57.0
+          "mean": 83.08,
+          "std": 0.0,
+          "p50": 83.08,
+          "p99": 83.08
         },
         "tpot_ms": {
-          "mean": 63.53,
-          "p50": 63.53,
-          "p99": 63.53
+          "mean": 80.19,
+          "std": 0.0,
+          "p50": 80.19,
+          "p99": 80.19
         },
-        "throughput_tok_per_sec": 15.74,
-        "tpot_delta_pct": 11.2
+        "throughput_tok_per_sec": 12.45,
+        "tpot_delta_pct": 0.7
       },
       "hf_baseline": {
         "ttft_ms": {
-          "mean": 60.2,
-          "p50": 60.2,
-          "p99": 60.2
+          "mean": 90.86,
+          "std": 0.0,
+          "p50": 90.86,
+          "p99": 90.86
         },
         "tpot_ms": {
-          "mean": 53.34,
-          "p50": 53.34,
-          "p99": 53.34
+          "mean": 82.81,
+          "std": 0.0,
+          "p50": 82.81,
+          "p99": 82.81
         },
-        "throughput_tok_per_sec": 18.75,
-        "tpot_delta_pct": 6.3
+        "throughput_tok_per_sec": 12.08,
+        "tpot_delta_pct": 1.5
       }
     },
     {
       "N": 512,
       "naive": {
         "ttft_ms": {
-          "mean": 57.1,
-          "p50": 57.1,
-          "p99": 57.1
+          "mean": 75.84,
+          "std": 0.0,
+          "p50": 75.84,
+          "p99": 75.84
         },
         "tpot_ms": {
-          "mean": 70.18,
-          "p50": 70.18,
-          "p99": 70.18
+          "mean": 100.31,
+          "std": 0.0,
+          "p50": 100.31,
+          "p99": 100.31
         },
-        "throughput_tok_per_sec": 14.25,
-        "tpot_delta_pct": 10.5
+        "throughput_tok_per_sec": 9.96,
+        "tpot_delta_pct": 25.1
       },
       "hf_baseline": {
         "ttft_ms": {
-          "mean": 60.1,
-          "p50": 60.1,
-          "p99": 60.1
+          "mean": 70.33,
+          "std": 0.0,
+          "p50": 70.33,
+          "p99": 70.33
         },
         "tpot_ms": {
-          "mean": 53.82,
-          "p50": 53.82,
-          "p99": 53.82
+          "mean": 81.74,
+          "std": 0.0,
+          "p50": 81.74,
+          "p99": 81.74
         },
-        "throughput_tok_per_sec": 18.58,
-        "tpot_delta_pct": 0.9
+        "throughput_tok_per_sec": 12.23,
+        "tpot_delta_pct": -1.3
       }
     },
     {
       "N": 1024,
       "naive": {
         "ttft_ms": {
-          "mean": 57.3,
-          "p50": 57.3,
-          "p99": 57.3
+          "mean": 80.14,
+          "std": 0.0,
+          "p50": 80.14,
+          "p99": 80.14
         },
         "tpot_ms": {
-          "mean": 83.45,
-          "p50": 83.45,
-          "p99": 83.45
+          "mean": 140.8,
+          "std": 0.0,
+          "p50": 140.8,
+          "p99": 140.8
         },
-        "throughput_tok_per_sec": 11.98,
-        "tpot_delta_pct": 18.9
+        "throughput_tok_per_sec": 7.1,
+        "tpot_delta_pct": 40.4
       },
       "hf_baseline": {
         "ttft_ms": {
-          "mean": 60.5,
-          "p50": 60.5,
-          "p99": 60.5
+          "mean": 91.99,
+          "std": 0.0,
+          "p50": 91.99,
+          "p99": 91.99
         },
         "tpot_ms": {
-          "mean": 54.21,
-          "p50": 54.21,
-          "p99": 54.21
+          "mean": 85.4,
+          "std": 0.0,
+          "p50": 85.4,
+          "p99": 85.4
         },
-        "throughput_tok_per_sec": 18.45,
-        "tpot_delta_pct": 0.7
+        "throughput_tok_per_sec": 11.71,
+        "tpot_delta_pct": 4.5
       }
     },
     {
       "N": 2048,
       "naive": {
         "ttft_ms": {
-          "mean": 57.6,
-          "p50": 57.6,
-          "p99": 57.6
+          "mean": 74.65,
+          "std": 0.0,
+          "p50": 74.65,
+          "p99": 74.65
         },
         "tpot_ms": {
-          "mean": 110.12,
-          "p50": 110.12,
-          "p99": 110.12
+          "mean": 288.24,
+          "std": 0.0,
+          "p50": 288.24,
+          "p99": 288.24
         },
-        "throughput_tok_per_sec": 9.08,
-        "tpot_delta_pct": 32.0
+        "throughput_tok_per_sec": 3.47,
+        "tpot_delta_pct": 104.7
       },
       "hf_baseline": {
         "ttft_ms": {
-          "mean": 60.8,
-          "p50": 60.8,
-          "p99": 60.8
+          "mean": 96.94,
+          "std": 0.0,
+          "p50": 96.94,
+          "p99": 96.94
         },
         "tpot_ms": {
-          "mean": 55.04,
-          "p50": 55.04,
-          "p99": 55.04
+          "mean": 89.8,
+          "std": 0.0,
+          "p50": 89.8,
+          "p99": 89.8
         },
-        "throughput_tok_per_sec": 18.17,
-        "tpot_delta_pct": 1.5
+        "throughput_tok_per_sec": 11.14,
+        "tpot_delta_pct": 5.2
       }
     }
   ]

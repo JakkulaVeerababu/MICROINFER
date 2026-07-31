@@ -12,7 +12,6 @@ import os
 import sys
 import json
 import time
-import statistics
 from pathlib import Path
 
 import torch
@@ -20,6 +19,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.model_loader import load_model_and_tokenizer, DEFAULT_MODEL_ID
+from benchmarks.bench_stats import compute_stats, flag_outliers
 
 # ---------------------------------------------------------------------------
 # Shared benchmark constants — identical across all six phase harnesses
@@ -34,18 +34,6 @@ TEST_PROMPTS = BENCHMARK_PROMPTS
 MAX_NEW_TOKENS = 64      # identical across all phases
 NUM_WARMUP_RUNS = 3      # discarded before timing
 NUM_TIMED_RUNS  = 10     # runs actually measured
-
-
-def _percentile(data: list, p: float) -> float:
-    """Return p-th percentile (0-100) of a sorted list."""
-    if not data:
-        return 0.0
-    data_sorted = sorted(data)
-    idx = (p / 100.0) * (len(data_sorted) - 1)
-    lo = int(idx)
-    hi = min(lo + 1, len(data_sorted) - 1)
-    frac = idx - lo
-    return data_sorted[lo] * (1 - frac) + data_sorted[hi] * frac
 
 
 def benchmark_hf_generate(
@@ -138,30 +126,28 @@ def benchmark_hf_generate(
                 "throughput_tok_per_sec": round(throughput_tps, 3),
             })
 
-        mean_ttft  = statistics.mean(run_ttfts)
-        p50_ttft   = _percentile(run_ttfts, 50)
-        p99_ttft   = _percentile(run_ttfts, 99)
-        mean_tpot  = statistics.mean(run_tpots)
-        p50_tpot   = _percentile(run_tpots, 50)
-        p99_tpot   = _percentile(run_tpots, 99)
-        mean_tp    = statistics.mean(run_throughputs)
-        p50_tp     = _percentile(run_throughputs, 50)
-        p99_tp     = _percentile(run_throughputs, 99)
+        ttft_stats = compute_stats(run_ttfts)
+        tpot_stats = compute_stats(run_tpots)
+        tp_stats   = compute_stats(run_throughputs)
+
+        flag_outliers(run_ttfts, "TTFT (ms)")
+        flag_outliers(run_tpots, "TPOT (ms)")
+        flag_outliers(run_throughputs, "Throughput (t/s)")
 
         print(f"  Input Tokens : {input_length}")
         print(f"  Output Tokens: {max_new_tokens}")
-        print(f"  TTFT          mean={mean_ttft:.1f}ms  p50={p50_ttft:.1f}ms  p99={p99_ttft:.1f}ms")
-        print(f"  TPOT          mean={mean_tpot:.2f}ms  p50={p50_tpot:.2f}ms  p99={p99_tpot:.2f}ms")
-        print(f"  Throughput    mean={mean_tp:.2f} t/s  p50={p50_tp:.2f} t/s  p99={p99_tp:.2f} t/s\n")
+        print(f"  TTFT          mean={ttft_stats['mean']:.1f}ms ± {ttft_stats['std']:.1f}ms  p50={ttft_stats['p50']:.1f}ms  p99={ttft_stats['p99']:.1f}ms")
+        print(f"  TPOT          mean={tpot_stats['mean']:.2f}ms ± {tpot_stats['std']:.2f}ms  p50={tpot_stats['p50']:.2f}ms  p99={tpot_stats['p99']:.2f}ms")
+        print(f"  Throughput    mean={tp_stats['mean']:.2f} ± {tp_stats['std']:.2f} t/s  p50={tp_stats['p50']:.2f} t/s  p99={tp_stats['p99']:.2f} t/s\n")
 
         results.append({
             "prompt_idx": prompt_idx,
             "prompt": prompt,
             "input_tokens": input_length,
             "output_tokens": max_new_tokens,
-            "ttft_ms":  {"mean": round(mean_ttft,2), "p50": round(p50_ttft,2), "p99": round(p99_ttft,2)},
-            "tpot_ms":  {"mean": round(mean_tpot,2), "p50": round(p50_tpot,2), "p99": round(p99_tpot,2)},
-            "throughput_tok_per_sec": {"mean": round(mean_tp,2), "p50": round(p50_tp,2), "p99": round(p99_tp,2)},
+            "ttft_ms":  ttft_stats,
+            "tpot_ms":  tpot_stats,
+            "throughput_tok_per_sec": tp_stats,
         })
 
     peak_vram_gb = 0.0
