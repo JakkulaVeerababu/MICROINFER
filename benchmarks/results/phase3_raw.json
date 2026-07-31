@@ -10,8 +10,8 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "generated_tokens": 64,
-      "ttft_ms": 55.71,
-      "total_latency_ms": 3825.84,
+      "ttft_ms": 724.62,
+      "total_latency_ms": 156915.73,
       "wave": 1
     },
     {
@@ -19,8 +19,8 @@
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "generated_tokens": 64,
-      "ttft_ms": 55.81,
-      "total_latency_ms": 3844.25,
+      "ttft_ms": 740.41,
+      "total_latency_ms": 157063.1,
       "wave": 1
     }
   ]

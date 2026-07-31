@@ -11,17 +11,17 @@
   "honest_note": "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). Active sequences are stepped in an iteration loop. True tensor-level batching across concurrent sequences requires restructuring the forward pass to stack (B, T) inputs \u2014 this is a documented next step.",
   "aggregate": {
     "throughput_tok_per_sec": {
-      "mean": 16.68,
-      "p50": 16.68,
-      "p99": 16.68
+      "mean": 0.41,
+      "p50": 0.41,
+      "p99": 0.41
     },
     "ttft_ms": {
-      "mean": 55.76
+      "mean": 732.51
     },
     "request_latency_ms": {
-      "mean": 3835.04,
-      "p50": 3835.04,
-      "p99": 3835.04
+      "mean": 156989.41,
+      "p50": 156989.41,
+      "p99": 156989.41
     }
   },
   "wave_results": [
@@ -29,14 +29,14 @@
       "wave": 1,
       "n_completed": 2,
       "total_tokens": 128,
-      "wall_time_s": 7.675,
-      "aggregate_throughput": 16.68,
-      "mean_ttft_ms": 55.76,
-      "p50_ttft_ms": 55.76,
-      "p99_ttft_ms": 55.81,
-      "mean_latency_ms": 3835.04,
-      "p50_latency_ms": 3835.04,
-      "p99_latency_ms": 3844.06
+      "wall_time_s": 313.987,
+      "aggregate_throughput": 0.41,
+      "mean_ttft_ms": 732.51,
+      "p50_ttft_ms": 732.51,
+      "p99_ttft_ms": 740.25,
+      "mean_latency_ms": 156989.41,
+      "p50_latency_ms": 156989.41,
+      "p99_latency_ms": 157061.62
     }
   ]
 }

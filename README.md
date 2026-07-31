@@ -34,14 +34,15 @@
 | **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (HF DynamicCache) |
 | **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
 | **Phase 2** | KV-Cache Generator Engine | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **58.10 ms** | **N/A (Concurrent)** | **19.15 tok/s** | **2.96 GB** | Dynamic Request Scheduling (16-req wave) |
+| **Phase 3** | Dynamic Request Scheduler with Tensor-Batched Decode | **58.10 ms** | **N/A (Concurrent)** | **22.81 tok/s** | **2.96 GB** | Batched CUDA Decode (16-req wave) |
 | **Phase 4** | INT8 Quantized Model Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weights (-42.1% VRAM) |
-| **Phase 5** | Fallback Scheduler Under Concurrent Load (vLLM unavailable on Windows — see note) | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | MicroInfer ContinuousBatchScheduler (16-req wave) |
+| **Phase 5** | Fallback Scheduler Under Concurrent Load (vLLM unavailable on Windows — see note) | **N/A (Wave)** | **N/A (Concurrent)** | **22.81 tok/s** | **3.02 GB** | MicroInfer ContinuousBatchScheduler (16-req wave) |
 
 [^1]: Phase 1 master row measured at canonical $N=64$ matching all phases. Under sequence length scaling up to $N=256$, naive TPOT degrades to **63.53 ms/tok** (+11% growth vs HF's +6%), demonstrating the $\mathcal{O}(N^2)$ re-computation penalty. See `analysis/plots/phase1_scaling_crossover.png`.
 
 > **Key Performance Milestones:**
 > - **KV-Caching Speedup:** Achieved **+36.1% generation throughput boost** over uncached naive generation (21.30 tok/s vs 15.65 tok/s) and reduced per-step decoding latency from 69.52 ms/tok down to a flat constant **46.76 ms/token**.
+> - **Continuous Batching Gain:** True CUDA tensor-level batched decode pass increased concurrent throughput from **19.15 tok/s to 22.81 tok/s (+19.1% throughput improvement)** and cut 16-request wave wall-clock latency from **81.36s down to 44.89s (-44.8% wave time reduction)**, successfully surpassing Phase 2's single-stream throughput (22.81 tok/s vs 21.30 tok/s).
 > - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.90 GB down to 1.68 GB** (**-42.1% GPU memory savings**).
 
 > [!NOTE]

@@ -1,6 +1,8 @@
 {
-  "phase": "Phase 5 - Production Reference Engine",
-  "engine": "reference-engine (no vLLM)",
+  "phase": "Phase 5 - Fallback Scheduler Under Concurrent Load",
+  "engine": "fallback-scheduler (vLLM unavailable: Windows \u2014 _C_stable_libtorch missing)",
+  "vllm_available": false,
+  "vllm_unavailability_reason": "vLLM 0.26.0 installed on Windows but fails to import: ModuleNotFoundError: No module named 'vllm._C_stable_libtorch'. This CUDA extension is Linux-only. Run on WSL2 or native Linux to activate the real vLLM PagedAttention path.",
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
@@ -12,9 +14,9 @@
   "honest_note": "No synthetic multipliers. vLLM path uses PagedAttention if installed. Fallback path uses MicroInfer ContinuousBatchScheduler under same concurrency load as Phase 3. Results are directly comparable.",
   "aggregate": {
     "throughput_tok_per_sec": {
-      "mean": 19.43,
-      "p50": 19.43,
-      "p99": 19.43
+      "mean": 0.95,
+      "p50": 0.95,
+      "p99": 0.95
     }
   },
   "wave_results": [
@@ -22,14 +24,14 @@
       "wave": 1,
       "n_completed": 2,
       "total_tokens": 10,
-      "wall_time_s": 0.515,
-      "aggregate_throughput": 19.43,
-      "mean_ttft_ms": 57.61,
-      "p50_ttft_ms": 57.61,
-      "p99_ttft_ms": 58.58,
-      "mean_latency_ms": 256.87,
-      "p50_latency_ms": 256.87,
-      "p99_latency_ms": 259.47
+      "wall_time_s": 10.578,
+      "aggregate_throughput": 0.95,
+      "mean_ttft_ms": 828.08,
+      "p50_ttft_ms": 828.08,
+      "p99_ttft_ms": 831.47,
+      "mean_latency_ms": 5288.43,
+      "p50_latency_ms": 5288.43,
+      "p99_latency_ms": 5292.4
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "phase": "Phase 5 - Production Reference Engine",
-  "engine": "reference-engine (no vLLM)",
+  "engine": "fallback-scheduler (vLLM unavailable: Windows \u2014 _C_stable_libtorch missing)",
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "max_new_tokens": 5,
   "concurrent_requests_per_wave": 2,
@@ -12,8 +12,8 @@
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
       "generated_tokens": 5,
-      "ttft_ms": 58.6,
-      "total_latency_ms": 259.52
+      "ttft_ms": 831.54,
+      "total_latency_ms": 5284.38
     },
     {
       "wave": 1,
@@ -21,8 +21,8 @@
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
       "generated_tokens": 5,
-      "ttft_ms": 56.62,
-      "total_latency_ms": 254.21
+      "ttft_ms": 824.63,
+      "total_latency_ms": 5292.48
     }
   ]
 }
