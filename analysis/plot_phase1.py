@@ -211,7 +211,7 @@ def plot_phase1_crossover():
 
     # Print crossover table to stdout as well
     print("\n" + "=" * 90)
-    print(f"  {'N':>5} | {'Naive TPOT':>10} {'Naive Δ%':>9} | {'HF TPOT':>10} {'HF Δ%':>9} | {'Winner (TPOT)':>14}")
+    print(f"  {'N':>5} | {'Naive TPOT':>10} {'Naive d%':>9} | {'HF TPOT':>10} {'HF d%':>9} | {'Winner (TPOT)':>14}")
     print("  " + "-" * 88)
     for r in rows:
         nt = r["naive"]["tpot_ms"]["mean"]

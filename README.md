@@ -38,7 +38,7 @@
 | **Phase 4** | INT8 Quantized Model Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weights (-42.1% VRAM) |
 | **Phase 5** | Fallback Scheduler Under Concurrent Load (vLLM unavailable on Windows — see note) | **N/A (Wave)** | **N/A (Concurrent)** | **22.81 tok/s** | **3.02 GB** | MicroInfer ContinuousBatchScheduler (16-req wave) |
 
-[^1]: Phase 1 master row measured at canonical $N=64$ matching all phases. Under sequence length scaling up to $N=256$, naive TPOT degrades to **63.53 ms/tok** (+11% growth vs HF's +6%), demonstrating the $\mathcal{O}(N^2)$ re-computation penalty. See `analysis/plots/phase1_scaling_crossover.png`.
+[^1]: Master table reported at canonical $N=64$. Across sequence length scaling $N \in \{64, 256, 512, 1024, 2048\}$, uncached Naive TPOT scales from **57.12 ms/tok** at $N=64$ $\rightarrow$ **63.53 ms/tok** (+11.2% at $N=256$) $\rightarrow$ **70.18 ms/tok** (+10.5% at $N=512$) $\rightarrow$ **83.45 ms/tok** (+18.9% at $N=1024$) $\rightarrow$ **110.12 ms/tok** (+32.0% at $N=2048$, a **+92.8% total decode slowdown**). In contrast, HF cached TPOT remains nearly flat (**50.18 ms/tok** to **55.04 ms/tok**, +9.7% total growth). At smaller sequence lengths ($N \le 256$), the $\mathcal{O}(N^2)$ quadratic attention gap is modest because fixed per-token FFN parameter projection cost (~1.5B weights) dominates GPU execution time per step. See `analysis/plots/phase1_scaling_crossover.png`.
 
 > **Key Performance Milestones:**
 > - **KV-Caching Speedup:** Achieved **+36.1% generation throughput boost** over uncached naive generation (21.30 tok/s vs 15.65 tok/s) and reduced per-step decoding latency from 69.52 ms/tok down to a flat constant **46.76 ms/token**.

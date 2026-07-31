@@ -414,6 +414,7 @@ def run_naive_scaling_benchmark(
             crossover_N = row["N"]
             break
 
+    max_n = max(n_values)
     if crossover_N is None:
         print(f"[Crossover] Naive did not exceed HF TPOT at any tested N ({min_n}..{actual_max_n}).")
         print("  Likely cause: Fixed FFN parameter projection cost dominates total per-token")
@@ -428,7 +429,6 @@ def run_naive_scaling_benchmark(
         print(f"  HF .generate() uses internal DynamicCache (O(1) per step).")
         print(f"  O(N^2) growth IS visible: naive TPOT grew {naive_growth:+.1f}ms from N={min_n} to N={actual_max_n},")
         print(f"  while HF TPOT grew only {hf_growth:+.1f}ms.")
-        max_n = max(n_values)
         print(f"  Absolute crossover occurs above N={max_n} for this model-hardware pair.")
         print(f"  See ANALYSIS.md for full mechanistic explanation.")
     else:

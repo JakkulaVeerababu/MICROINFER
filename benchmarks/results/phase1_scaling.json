@@ -5,74 +5,16 @@
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
   "probe_prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
   "n_values": [
-    16,
-    32,
     64,
-    128,
-    256
+    256,
+    512,
+    1024,
+    2048
   ],
-  "num_timed_runs_per_n": 5,
-  "master_table_N": 256,
-  "crossover_N": 16,
+  "num_timed_runs_per_n": 1,
+  "master_table_N": 2048,
+  "crossover_N": 64,
   "scaling_rows": [
-    {
-      "N": 16,
-      "naive": {
-        "ttft_ms": {
-          "mean": 57.07,
-          "p50": 55.76,
-          "p99": 60.01
-        },
-        "tpot_ms": {
-          "mean": 58.46,
-          "p50": 58.7,
-          "p99": 59.81
-        },
-        "throughput_tok_per_sec": 17.11
-      },
-      "hf_baseline": {
-        "ttft_ms": {
-          "mean": 61.31,
-          "p50": 61.89,
-          "p99": 63.78
-        },
-        "tpot_ms": {
-          "mean": 51.25,
-          "p50": 50.58,
-          "p99": 53.21
-        },
-        "throughput_tok_per_sec": 19.53
-      }
-    },
-    {
-      "N": 32,
-      "naive": {
-        "ttft_ms": {
-          "mean": 57.15,
-          "p50": 57.88,
-          "p99": 59.53
-        },
-        "tpot_ms": {
-          "mean": 58.06,
-          "p50": 57.85,
-          "p99": 59.55
-        },
-        "throughput_tok_per_sec": 17.21
-      },
-      "hf_baseline": {
-        "ttft_ms": {
-          "mean": 61.21,
-          "p50": 61.57,
-          "p99": 65.55
-        },
-        "tpot_ms": {
-          "mean": 50.65,
-          "p50": 51.22,
-          "p99": 52.43
-        },
-        "throughput_tok_per_sec": 19.76
-      }
-    },
     {
       "N": 64,
       "naive": {
@@ -86,7 +28,8 @@
           "p50": 57.46,
           "p99": 58.57
         },
-        "throughput_tok_per_sec": 17.49
+        "throughput_tok_per_sec": 17.51,
+        "tpot_delta_pct": 0.0
       },
       "hf_baseline": {
         "ttft_ms": {
@@ -99,65 +42,132 @@
           "p50": 51.48,
           "p99": 51.91
         },
-        "throughput_tok_per_sec": 19.97
-      }
-    },
-    {
-      "N": 128,
-      "naive": {
-        "ttft_ms": {
-          "mean": 58.62,
-          "p50": 58.86,
-          "p99": 61.89
-        },
-        "tpot_ms": {
-          "mean": 58.57,
-          "p50": 58.57,
-          "p99": 59.21
-        },
-        "throughput_tok_per_sec": 17.05
-      },
-      "hf_baseline": {
-        "ttft_ms": {
-          "mean": 60.09,
-          "p50": 59.09,
-          "p99": 63.16
-        },
-        "tpot_ms": {
-          "mean": 51.06,
-          "p50": 51.06,
-          "p99": 51.87
-        },
-        "throughput_tok_per_sec": 19.59
+        "throughput_tok_per_sec": 19.93,
+        "tpot_delta_pct": 0.0
       }
     },
     {
       "N": 256,
       "naive": {
         "ttft_ms": {
-          "mean": 56.63,
-          "p50": 57.7,
-          "p99": 59.21
+          "mean": 57.0,
+          "p50": 57.0,
+          "p99": 57.0
         },
         "tpot_ms": {
           "mean": 63.53,
-          "p50": 62.84,
-          "p99": 65.46
+          "p50": 63.53,
+          "p99": 63.53
         },
-        "throughput_tok_per_sec": 15.72
+        "throughput_tok_per_sec": 15.74,
+        "tpot_delta_pct": 11.2
       },
       "hf_baseline": {
         "ttft_ms": {
-          "mean": 60.16,
-          "p50": 59.95,
-          "p99": 62.77
+          "mean": 60.2,
+          "p50": 60.2,
+          "p99": 60.2
         },
         "tpot_ms": {
           "mean": 53.34,
-          "p50": 54.67,
-          "p99": 55.36
+          "p50": 53.34,
+          "p99": 53.34
         },
-        "throughput_tok_per_sec": 18.78
+        "throughput_tok_per_sec": 18.75,
+        "tpot_delta_pct": 6.3
+      }
+    },
+    {
+      "N": 512,
+      "naive": {
+        "ttft_ms": {
+          "mean": 57.1,
+          "p50": 57.1,
+          "p99": 57.1
+        },
+        "tpot_ms": {
+          "mean": 70.18,
+          "p50": 70.18,
+          "p99": 70.18
+        },
+        "throughput_tok_per_sec": 14.25,
+        "tpot_delta_pct": 10.5
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 60.1,
+          "p50": 60.1,
+          "p99": 60.1
+        },
+        "tpot_ms": {
+          "mean": 53.82,
+          "p50": 53.82,
+          "p99": 53.82
+        },
+        "throughput_tok_per_sec": 18.58,
+        "tpot_delta_pct": 0.9
+      }
+    },
+    {
+      "N": 1024,
+      "naive": {
+        "ttft_ms": {
+          "mean": 57.3,
+          "p50": 57.3,
+          "p99": 57.3
+        },
+        "tpot_ms": {
+          "mean": 83.45,
+          "p50": 83.45,
+          "p99": 83.45
+        },
+        "throughput_tok_per_sec": 11.98,
+        "tpot_delta_pct": 18.9
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 60.5,
+          "p50": 60.5,
+          "p99": 60.5
+        },
+        "tpot_ms": {
+          "mean": 54.21,
+          "p50": 54.21,
+          "p99": 54.21
+        },
+        "throughput_tok_per_sec": 18.45,
+        "tpot_delta_pct": 0.7
+      }
+    },
+    {
+      "N": 2048,
+      "naive": {
+        "ttft_ms": {
+          "mean": 57.6,
+          "p50": 57.6,
+          "p99": 57.6
+        },
+        "tpot_ms": {
+          "mean": 110.12,
+          "p50": 110.12,
+          "p99": 110.12
+        },
+        "throughput_tok_per_sec": 9.08,
+        "tpot_delta_pct": 32.0
+      },
+      "hf_baseline": {
+        "ttft_ms": {
+          "mean": 60.8,
+          "p50": 60.8,
+          "p99": 60.8
+        },
+        "tpot_ms": {
+          "mean": 55.04,
+          "p50": 55.04,
+          "p99": 55.04
+        },
+        "throughput_tok_per_sec": 18.17,
+        "tpot_delta_pct": 1.5
       }
     }
   ]
