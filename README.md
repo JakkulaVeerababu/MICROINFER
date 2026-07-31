@@ -68,12 +68,14 @@
 MICROINFER/
 ├── README.md                           # Master project guide & metrics table
 ├── requirements.txt                    # Project dependencies
-├── PHASE0_SPEC.md                      # Phase 0 specification & deliverable matrix
-├── PHASE1_SPEC.md                      # Phase 1 specification & deliverable matrix
-├── PHASE2_SPEC.md                      # Phase 2 specification & deliverable matrix
-├── PHASE3_SPEC.md                      # Phase 3 specification & deliverable matrix
-├── PHASE4_SPEC.md                      # Phase 4 specification & deliverable matrix
-├── PHASE5_SPEC.md                      # Phase 5 specification & deliverable matrix
+│
+├── specs/                              # Phase Specification & Deliverable Matrices
+│   ├── PHASE0_SPEC.md                  # Phase 0 specification & deliverable matrix
+│   ├── PHASE1_SPEC.md                  # Phase 1 specification & deliverable matrix
+│   ├── PHASE2_SPEC.md                  # Phase 2 specification & deliverable matrix
+│   ├── PHASE3_SPEC.md                  # Phase 3 specification & deliverable matrix
+│   ├── PHASE4_SPEC.md                  # Phase 4 specification & deliverable matrix
+│   └── PHASE5_SPEC.md                  # Phase 5 specification & deliverable matrix
 │
 ├── src/                                # Core Engine Source Modules
 │   ├── diagnostics.py                  # GPU hardware capability & CUDA diagnostic profiler
