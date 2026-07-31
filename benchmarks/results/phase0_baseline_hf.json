@@ -3,72 +3,72 @@
   "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
   "device": "cuda",
   "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
-  "max_new_tokens": 64,
+  "max_new_tokens": 10,
   "num_warmup_runs": 3,
-  "num_timed_runs": 10,
+  "num_timed_runs": 1,
   "peak_vram_gb": 2.89,
   "results": [
     {
       "prompt_idx": 1,
       "prompt": "Explain how transformer attention mechanism works in simple terms for a software engineer.",
       "input_tokens": 15,
-      "output_tokens": 64,
+      "output_tokens": 10,
       "ttft_ms": {
-        "mean": 57.51,
-        "p50": 56.54,
-        "p99": 63.69
+        "mean": 72.79,
+        "p50": 72.79,
+        "p99": 72.79
       },
       "tpot_ms": {
-        "mean": 49.24,
-        "p50": 49.55,
-        "p99": 52.25
+        "mean": 58.02,
+        "p50": 58.02,
+        "p99": 58.02
       },
       "throughput_tok_per_sec": {
-        "mean": 20.33,
-        "p50": 20.18,
-        "p99": 21.25
+        "mean": 17.24,
+        "p50": 17.24,
+        "p99": 17.24
       }
     },
     {
       "prompt_idx": 2,
       "prompt": "Write a Python function to implement quicksort with step-by-step explanations.",
       "input_tokens": 14,
-      "output_tokens": 64,
+      "output_tokens": 10,
       "ttft_ms": {
-        "mean": 57.52,
-        "p50": 57.44,
-        "p99": 58.87
+        "mean": 68.17,
+        "p50": 68.17,
+        "p99": 68.17
       },
       "tpot_ms": {
-        "mean": 49.59,
-        "p50": 49.59,
-        "p99": 50.55
+        "mean": 59.67,
+        "p50": 59.67,
+        "p99": 59.67
       },
       "throughput_tok_per_sec": {
-        "mean": 20.17,
-        "p50": 20.17,
-        "p99": 20.62
+        "mean": 16.76,
+        "p50": 16.76,
+        "p99": 16.76
       }
     },
     {
       "prompt_idx": 3,
       "prompt": "What are the key trade-offs between KV-caching, continuous batching, and weight quantization in LLM serving?",
       "input_tokens": 23,
-      "output_tokens": 64,
+      "output_tokens": 10,
       "ttft_ms": {
-        "mean": 61.45,
-        "p50": 58.0,
-        "p99": 80.12
+        "mean": 97.47,
+        "p50": 97.47,
+        "p99": 97.47
       },
       "tpot_ms": {
-        "mean": 50.17,
-        "p50": 49.8,
-        "p99": 52.21
+        "mean": 64.0,
+        "p50": 64.0,
+        "p99": 64.0
       },
       "throughput_tok_per_sec": {
-        "mean": 19.94,
-        "p50": 20.08,
-        "p99": 20.44
+        "mean": 15.63,
+        "p50": 15.63,
+        "p99": 15.63
       }
     }
   ]

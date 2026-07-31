@@ -97,7 +97,7 @@ See `analysis/plots/phase1_scaling_crossover.png` for the visual crossover chart
 
 ---
 
-## Open Questions I'd Want to Explain Live
+## Key Architectural & Systems Questions
 
 - How does the custom pre-allocated 5D tensor cache (`KVCache` in `src/kv_cache.py`) compare in memory layout and overhead to HuggingFace's `DynamicCache` used in the generator pipeline?
 - Why did we step active scheduler sequences in a PyTorch iteration loop rather than stacking them into a single batched tensor, and what kernel optimizations would be needed for true batch stacking?

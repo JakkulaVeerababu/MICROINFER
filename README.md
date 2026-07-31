@@ -13,18 +13,17 @@
 
 ---
 
-## Technical Features & Framing (Interview Defense)
+## Technical Features & Architecture
 
 1. **KV-Cache Store & Two-Phase Generation Loop (`src/kv_cache.py` + `src/cached_generate.py`):**
    - `src/kv_cache.py` implements a custom pre-allocated 5D CUDA tensor store (`KVCache`) — owns memory up front with no Python-list growth. It subclasses HuggingFace's `Cache` and `CacheLayerMixin` interfaces for native model integration.
    - `src/cached_generate.py` implements a **two-phase Prefill/Decode loop** with independent CUDA-synchronised TTFT and TPOT timers, driving `KVCache.from_model(model)` directly as the live cache object during benchmark execution.
 
 2. **Dynamic Request Scheduler & Queue Engine (`src/scheduler.py`):**
-   - Implements an iteration-level request queue scheduler managing `SequenceState` lifecycles (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`).
-   - **Interface Realism:** Manages dynamic in-flight request admission and completed request eviction. *Note for reviewers: Sequentially processes active sequences per step; tensor-level batch stacking across concurrent sequences is documented as a future kernel optimization.*
+   - Implements an iteration-level request queue scheduler managing `SequenceState` lifecycles (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`), handling dynamic in-flight request admission and completed request eviction. *Note: Sequentially processes active sequences per step; tensor-level batch stacking across concurrent sequences is documented as a future kernel optimization.*
+
 3. **INT8 Weight-Only Quantization Tier (`src/quant_loader.py`):**
-   - Integrates the industry-standard `bitsandbytes` library (`load_in_8bit=True`) to evaluate 8-bit weight matrix multiplication.
-   - **Interface Realism:** Serves as a quantized benchmark tier to profile VRAM footprint savings (-42.1% memory reduction) and dequantization trade-offs vs FP16.
+   - Integrates the industry-standard `bitsandbytes` library (`load_in_8bit=True`) to evaluate 8-bit weight matrix multiplication, serving as a quantized benchmark tier to profile VRAM footprint savings (-42.1% memory reduction) and dequantization trade-offs vs FP16.
 
 ---
 
@@ -158,22 +157,6 @@ python benchmarks/baseline_vllm.py
 - **Phase 3 Spec Matrix:** [specs/PHASE3_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE3_SPEC.md) (100% Complete)  
 - **Phase 4 Spec Matrix:** [specs/PHASE4_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE4_SPEC.md) (100% Complete)  
 - **Phase 5 Spec Matrix:** [specs/PHASE5_SPEC.md](file:///c:/Users/LENOVO/Desktop/MICROINFER/specs/PHASE5_SPEC.md) (100% Complete)  
-
----
-
-## 💼 Target Roles & Target Engineering Teams
-
-MicroInfer is engineered as an elite systems portfolio demonstrating deep expertise in LLM serving infrastructure, GPU memory dynamics, and low-level PyTorch/CUDA execution.
-
-I am **actively seeking opportunities** in:
-- **LLM Inference & Serving Infrastructure Engineering**
-- **MLSys & High-Performance GPU Kernel Engineering**
-- **AI Infrastructure & Production Platform Teams**
-
-### Target Organizations:
-- **LLM Serving Pioneers:** [`vLLM Project / Anyscale`](https://github.com/vllm-project/vllm) | [`Fireworks.ai`](https://github.com/fireworks-ai) | [`Together AI`](https://github.com/togethercomputer) | [`Groq`](https://github.com/groq) | [`Modal`](https://github.com/modal-labs) | [`Replicate`](https://github.com/replicate) | [`Baseten`](https://github.com/basetenlabs) | [`Lepton AI`](https://github.com/leptonai)
-- **AI Hardware & Accelerators:** [`NVIDIA TensorRT-LLM`](https://github.com/NVIDIA/TensorRT-LLM) | [`AMD ROCm`](https://github.com/ROCm) | [`Cerebras Systems`](https://github.com/Cerebras) | [`Tenstorrent`](https://github.com/tenstorrent) | [`SambaNova`](https://github.com/sambanova)
-- **Frontier AI Labs & Cloud:** [`Google DeepMind`](https://github.com/google-deepmind) | [`Meta AI (PyTorch)`](https://github.com/pytorch/pytorch) | [`OpenAI (Triton)`](https://github.com/openai/triton) | [`Anthropic`](https://github.com/anthropics) | [`Apple (MLX)`](https://github.com/ml-explore/mlx)
 
 ---
 
