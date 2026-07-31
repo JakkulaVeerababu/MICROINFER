@@ -108,7 +108,7 @@ class KVCache(Cache):
             super().__init__(layers=layers)
         except TypeError:
             super().__init__()
-            self.layers = layers
+        self.layers = layers
 
     @property
     def current_len(self) -> int:
