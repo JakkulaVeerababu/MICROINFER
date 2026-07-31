@@ -159,24 +159,28 @@ def run_scheduler_benchmark(
     wave_results = []
     all_raw_requests = []
 
-    for wave_idx in range(num_waves):
-        print(f"[Wave {wave_idx + 1}/{num_waves}] Firing {concurrent_requests} simultaneous requests...")
-        wave = _run_wave(model, tokenizer, device,
-                         n_requests=concurrent_requests,
-                         max_new_tokens=max_new_tokens)
-        wave_results.append(wave)
-        for req in wave["requests"]:
-            req["wave"] = wave_idx + 1
-            all_raw_requests.append(req)
+    # Start GPU utilization sampler — samples nvidia-smi once per second in background
+    gpu_sampler = GpuUtilSampler(interval_sec=1.0)
 
-        print(f"  Completed     : {wave['n_completed']} requests")
-        print(f"  Total tokens  : {wave['total_tokens']}")
-        print(f"  Wall time     : {wave['wall_time_s']:.2f} s")
-        print(f"  Aggregate tp  : {wave['aggregate_throughput']:.2f} tokens/sec")
-        print(f"  TTFT          : mean={wave['mean_ttft_ms']:.1f}ms  "
-              f"p50={wave['p50_ttft_ms']:.1f}ms  p99={wave['p99_ttft_ms']:.1f}ms")
-        print(f"  Req latency   : mean={wave['mean_latency_ms']:.1f}ms  "
-              f"p50={wave['p50_latency_ms']:.1f}ms  p99={wave['p99_latency_ms']:.1f}ms\n")
+    with gpu_sampler:
+        for wave_idx in range(num_waves):
+            print(f"[Wave {wave_idx + 1}/{num_waves}] Firing {concurrent_requests} simultaneous requests...")
+            wave = _run_wave(model, tokenizer, device,
+                             n_requests=concurrent_requests,
+                             max_new_tokens=max_new_tokens)
+            wave_results.append(wave)
+            for req in wave["requests"]:
+                req["wave"] = wave_idx + 1
+                all_raw_requests.append(req)
+
+            print(f"  Completed     : {wave['n_completed']} requests")
+            print(f"  Total tokens  : {wave['total_tokens']}")
+            print(f"  Wall time     : {wave['wall_time_s']:.2f} s")
+            print(f"  Aggregate tp  : {wave['aggregate_throughput']:.2f} tokens/sec")
+            print(f"  TTFT          : mean={wave['mean_ttft_ms']:.1f}ms  "
+                  f"p50={wave['p50_ttft_ms']:.1f}ms  p99={wave['p99_ttft_ms']:.1f}ms")
+            print(f"  Req latency   : mean={wave['mean_latency_ms']:.1f}ms  "
+                  f"p50={wave['p50_latency_ms']:.1f}ms  p99={wave['p99_latency_ms']:.1f}ms\n")
 
     # -----------------------------------------------------------------------
     # Aggregate across all timed waves
@@ -197,11 +201,19 @@ def run_scheduler_benchmark(
     if torch.cuda.is_available():
         peak_vram_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
 
+    gpu_util_result = {
+        "mean_pct":  gpu_sampler.mean,
+        "std_pct":   gpu_sampler.std,
+        "peak_pct":  gpu_sampler.peak,
+        "n_samples": gpu_sampler.n_samples,
+    }
+
     print("--- Aggregate across all waves ---")
     print(f"  Aggregate Throughput  mean={tp_stats['mean']:.2f} ± {tp_stats['std']:.2f} t/s  p50={tp_stats['p50']:.2f} t/s  p99={tp_stats['p99']:.2f} t/s")
     print(f"  Mean TTFT             mean={ttft_stats['mean']:.1f}ms ± {ttft_stats['std']:.1f}ms")
     print(f"  Request Latency       mean={lat_stats['mean']:.1f}ms ± {lat_stats['std']:.1f}ms  p50={lat_stats['p50']:.1f}ms  p99={lat_stats['p99']:.1f}ms")
     print(f"  Peak VRAM             {peak_vram_gb:.2f} GB")
+    print(f"  GPU Utilization       mean={gpu_sampler.mean:.1f}% ± {gpu_sampler.std:.1f}%  peak={gpu_sampler.peak:.0f}%  (n={gpu_sampler.n_samples} samples)")
 
     output_dir = Path(__file__).parent / "results"
     output_dir.mkdir(exist_ok=True, parents=True)
@@ -216,11 +228,12 @@ def run_scheduler_benchmark(
         "num_warmup_waves": num_warmup,
         "num_timed_waves": num_waves,
         "peak_vram_gb": round(peak_vram_gb, 2),
+        "gpu_utilization_pct": gpu_util_result,
         "honest_note": (
             "Scheduler manages request queue lifecycles (WAITING -> RUNNING -> FINISHED). "
-            "Active sequences are stepped in an iteration loop. "
-            "True tensor-level batching across concurrent sequences requires "
-            "restructuring the forward pass to stack (B, T) inputs — this is a documented next step."
+            "Decode pass is genuinely tensor-batched: all B active sequences are stacked into "
+            "a single (B, 1) input tensor per step. Prefill remains sequential. "
+            "GPU utilization sampled via nvidia-smi once per second during the timed benchmark."
         ),
         "aggregate": {
             "throughput_tok_per_sec": tp_stats,
@@ -280,6 +293,69 @@ def sample_gpu_util(duration_sec: float, interval_sec: float = 1.0) -> list:
             pass
         time.sleep(interval_sec)
     return samples
+
+
+class GpuUtilSampler:
+    """
+    Context manager that samples nvidia-smi GPU utilization % once per second
+    in a background thread during the benchmark run.
+
+    Usage:
+        with GpuUtilSampler() as sampler:
+            run_benchmark_waves()
+        print(sampler.mean, sampler.std, sampler.peak)
+    """
+
+    def __init__(self, interval_sec: float = 1.0):
+        self.interval_sec = interval_sec
+        self.samples: list = []
+        self._stop_event = threading.Event()
+        self._thread = None
+
+    def _worker(self):
+        while not self._stop_event.is_set():
+            try:
+                result = subprocess.run(
+                    ["nvidia-smi", "--query-gpu=utilization.gpu",
+                     "--format=csv,noheader,nounits"],
+                    capture_output=True, text=True, timeout=3,
+                )
+                if result.returncode == 0:
+                    val = result.stdout.strip()
+                    if val:
+                        self.samples.append(float(val))
+            except Exception:
+                pass
+            self._stop_event.wait(timeout=self.interval_sec)
+
+    def __enter__(self):
+        self._thread = threading.Thread(target=self._worker, daemon=True)
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_):
+        self._stop_event.set()
+        if self._thread:
+            self._thread.join(timeout=5)
+
+    @property
+    def mean(self) -> float:
+        return round(sum(self.samples) / len(self.samples), 1) if self.samples else 0.0
+
+    @property
+    def std(self) -> float:
+        if len(self.samples) < 2:
+            return 0.0
+        m = self.mean
+        return round((sum((x - m) ** 2 for x in self.samples) / (len(self.samples) - 1)) ** 0.5, 1)
+
+    @property
+    def peak(self) -> float:
+        return max(self.samples) if self.samples else 0.0
+
+    @property
+    def n_samples(self) -> int:
+        return len(self.samples)
 
 def run_staggered_arrival_benchmark(
     model_id: str = DEFAULT_MODEL_ID,
@@ -420,16 +496,234 @@ def run_capacity_ceiling_benchmark(
     else:
         print("Not enough successful runs to calculate delta.")
 
+
+# ===========================================================================
+# Static Batch Baseline & Head-to-Head Comparison
+# ===========================================================================
+
+class StaticBatchBaseline:
+    """
+    Naive static batcher: collects all requests upfront, processes each to
+    completion sequentially (no interleaving), simulating a system that
+    waits for the longest request before admitting new ones (head-of-line blocking).
+
+    This is the baseline that continuous batching improves upon.
+    """
+
+    def __init__(self, batch_size: int = 8, device: str = "cuda"):
+        self.batch_size = batch_size
+        self.device = device
+        self.pending: list = []
+        self.finished: list = []
+
+    def add_request(self, prompt: str, max_new_tokens: int):
+        """Queue a request (prompt, max_new_tokens) for processing."""
+        self.pending.append({"prompt": prompt, "max_new_tokens": max_new_tokens})
+
+    def run(self, model, tokenizer, progress: bool = True) -> float:
+        """
+        Process all pending requests sequentially (one at a time per batch slot).
+        Returns total wall time in seconds.
+        """
+        from src.cached_generate import cached_generate
+
+        t_total_start = time.perf_counter()
+
+        batches = [
+            self.pending[i : i + self.batch_size]
+            for i in range(0, len(self.pending), self.batch_size)
+        ]
+
+        for b_idx, batch in enumerate(batches):
+            if progress:
+                print(f"  [StaticBatch {b_idx+1}/{len(batches)}] Processing {len(batch)} requests sequentially...")
+            for req in batch:
+                t0 = time.perf_counter()
+                result = cached_generate(
+                    model, tokenizer,
+                    req["prompt"],
+                    max_new_tokens=req["max_new_tokens"],
+                    temperature=0.0,
+                )
+                latency_ms = (time.perf_counter() - t0) * 1000.0
+                self.finished.append({
+                    "prompt":           req["prompt"][:40],
+                    "generated_tokens": result["generated_tokens"],
+                    "latency_ms":       round(latency_ms, 2),
+                    "ttft_ms":          result["ttft_ms"],
+                })
+
+        return time.perf_counter() - t_total_start
+
+    def total_tokens(self) -> int:
+        return sum(r["generated_tokens"] for r in self.finished)
+
+    def mean_latency_ms(self) -> float:
+        if not self.finished:
+            return 0.0
+        return round(sum(r["latency_ms"] for r in self.finished) / len(self.finished), 2)
+
+
+def run_static_vs_continuous_benchmark(
+    model_id: str = DEFAULT_MODEL_ID,
+    max_batch_size: int = 8,
+):
+    """
+    Runs both StaticBatchBaseline and ContinuousBatchScheduler against the
+    identical 8-request staggered arrival workload and saves a side-by-side
+    comparison to benchmarks/results/phase3_static_vs_continuous.json.
+    """
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model, tokenizer = load_model_and_tokenizer(model_id=model_id, device=device)
+    model.eval()
+
+    print("\n" + "=" * 60)
+    print("  PHASE 3: STATIC vs CONTINUOUS BATCHING — HEAD TO HEAD")
+    print("=" * 60 + "\n")
+
+    # Identical workload used for both systems
+    WORKLOAD = [
+        (0.0,  "What is the capital of France?",                  16),
+        (0.5,  "Write a quicksort in python.",                    64),
+        (1.2,  "Explain transformer attention.",                  128),
+        (1.5,  "Translate hello to Spanish.",                       8),
+        (2.0,  "Why is the sky blue? Explain in extreme detail.", 256),
+        (2.5,  "Tell me a short joke.",                            32),
+        (3.0,  "Summarize the history of Rome.",                  200),
+        (3.5,  "What is 2+2?",                                      4),
+    ]
+
+    # -------------------------------------------------------------------
+    # System A: Static Batching
+    # Ignores arrival times — receives all at t=0, processes sequentially
+    # -------------------------------------------------------------------
+    print("[A] Running STATIC BATCH Baseline (sequential, no interleaving)...")
+    static = StaticBatchBaseline(batch_size=max_batch_size, device=device)
+    for _, prompt, max_new_tokens in WORKLOAD:
+        static.add_request(prompt, max_new_tokens)
+
+    static_wall_time = static.run(model, tokenizer, progress=True)
+    static_total_tokens = static.total_tokens()
+    static_throughput = static_total_tokens / static_wall_time if static_wall_time > 0 else 0
+    static_mean_lat = static.mean_latency_ms()
+    static_active_ms = sum(r["latency_ms"] for r in static.finished)
+    static_idle_ms = max(0.0, static_wall_time * 1000 - static_active_ms)
+
+    print(f"  Wall Time    : {static_wall_time:.2f} s")
+    print(f"  Total Tokens : {static_total_tokens}")
+    print(f"  Throughput   : {static_throughput:.2f} tok/s")
+    print(f"  Mean Latency : {static_mean_lat:.1f} ms")
+    print(f"  GPU Idle Est.: {static_idle_ms:.0f} ms\n")
+
+    # -------------------------------------------------------------------
+    # System B: Continuous Batching Scheduler (staggered arrival)
+    # -------------------------------------------------------------------
+    print("[B] Running CONTINUOUS BATCH Scheduler (staggered arrival)...")
+    scheduler = ContinuousBatchScheduler(max_batch_size=max_batch_size, device=device)
+
+    t_cb_start = time.perf_counter()
+    next_req_idx = 0
+    while next_req_idx < len(WORKLOAD) or scheduler.has_pending_work():
+        current_time = time.perf_counter() - t_cb_start
+        while next_req_idx < len(WORKLOAD) and current_time >= WORKLOAD[next_req_idx][0]:
+            _, prompt, max_new_tokens = WORKLOAD[next_req_idx]
+            scheduler.add_request(prompt, tokenizer,
+                                   max_new_tokens=max_new_tokens,
+                                   temperature=0.0,
+                                   model=model)
+            next_req_idx += 1
+        if scheduler.has_pending_work():
+            scheduler.step(model, tokenizer)
+        else:
+            time.sleep(0.005)
+
+    cb_wall_time = time.perf_counter() - t_cb_start
+    cb_seqs = scheduler.finished_sequences
+    cb_total_tokens = sum(len(s.generated_tokens) for s in cb_seqs)
+    cb_throughput = cb_total_tokens / cb_wall_time if cb_wall_time > 0 else 0
+    cb_mean_lat = round(
+        sum(s.total_time_ms for s in cb_seqs) / len(cb_seqs) if cb_seqs else 0, 2
+    )
+    cb_active_ms = sum(s.total_time_ms for s in cb_seqs)
+    cb_idle_ms = max(0.0, cb_wall_time * 1000 - cb_active_ms)
+
+    print(f"  Wall Time    : {cb_wall_time:.2f} s")
+    print(f"  Total Tokens : {cb_total_tokens}")
+    print(f"  Throughput   : {cb_throughput:.2f} tok/s")
+    print(f"  Mean Latency : {cb_mean_lat:.1f} ms")
+    print(f"  GPU Idle Est.: {cb_idle_ms:.0f} ms\n")
+
+    # -------------------------------------------------------------------
+    # Comparison summary
+    # -------------------------------------------------------------------
+    throughput_gain_pct = (
+        (cb_throughput - static_throughput) / static_throughput * 100
+        if static_throughput > 0 else 0.0
+    )
+    latency_reduction_pct = (
+        (static_mean_lat - cb_mean_lat) / static_mean_lat * 100
+        if static_mean_lat > 0 else 0.0
+    )
+    wall_time_reduction_pct = (
+        (static_wall_time - cb_wall_time) / static_wall_time * 100
+        if static_wall_time > 0 else 0.0
+    )
+
+    print("--- Head-to-Head Summary ---")
+    print(f"  Throughput gain   (CB vs Static) : {throughput_gain_pct:+.1f}%")
+    print(f"  Latency reduction (CB vs Static) : {latency_reduction_pct:+.1f}%")
+    print(f"  Wall time savings (CB vs Static) : {wall_time_reduction_pct:+.1f}%")
+
+    output_dir = Path(__file__).parent / "results"
+    output_dir.mkdir(exist_ok=True, parents=True)
+    result = {
+        "phase": "Phase 3 - Static vs Continuous Batching Comparison",
+        "model_id": model_id,
+        "workload": [
+            {"arrival_t": t, "prompt": p[:40], "max_new_tokens": n}
+            for t, p, n in WORKLOAD
+        ],
+        "static_batch": {
+            "wall_time_s":            round(static_wall_time, 3),
+            "total_tokens":           static_total_tokens,
+            "throughput_tok_per_sec": round(static_throughput, 2),
+            "mean_latency_ms":        static_mean_lat,
+            "gpu_idle_estimate_ms":   round(static_idle_ms, 0),
+        },
+        "continuous_batch": {
+            "wall_time_s":            round(cb_wall_time, 3),
+            "total_tokens":           cb_total_tokens,
+            "throughput_tok_per_sec": round(cb_throughput, 2),
+            "mean_latency_ms":        cb_mean_lat,
+            "gpu_idle_estimate_ms":   round(cb_idle_ms, 0),
+        },
+        "comparison": {
+            "throughput_gain_pct":     round(throughput_gain_pct, 1),
+            "latency_reduction_pct":   round(latency_reduction_pct, 1),
+            "wall_time_reduction_pct": round(wall_time_reduction_pct, 1),
+        },
+    }
+    with open(output_dir / "phase3_static_vs_continuous.json", "w") as f:
+        json.dump(result, f, indent=2)
+
+    print(f"\n[MicroInfer] Comparison -> '{output_dir / 'phase3_static_vs_continuous.json'}'")
+    return result
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--staggered", action="store_true", help="Run the staggered arrival benchmark")
-    parser.add_argument("--capacity", action="store_true", help="Run the capacity ceiling benchmark")
+    parser.add_argument("--capacity",  action="store_true", help="Run the capacity ceiling benchmark")
+    parser.add_argument("--compare",   action="store_true", help="Run static vs continuous batching comparison")
     args = parser.parse_args()
 
-    if not args.staggered and not args.capacity:
+    if not args.staggered and not args.capacity and not args.compare:
         run_scheduler_benchmark()
     else:
         if args.staggered:
             run_staggered_arrival_benchmark()
         if args.capacity:
             run_capacity_ceiling_benchmark()
+        if args.compare:
+            run_static_vs_continuous_benchmark()
+

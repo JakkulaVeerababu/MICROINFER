@@ -1,0 +1,44 @@
+{
+  "steps_profiled": 20,
+  "batch_size": 8,
+  "total_cpu_time_ms": 64226.54,
+  "total_cuda_time_ms": 0.0,
+  "cpu_pct": 100.0,
+  "cuda_pct": 0.0,
+  "top3_cuda": [
+    {
+      "op": "scheduler_step",
+      "cuda_time_ms": 0.0,
+      "calls": 20
+    },
+    {
+      "op": "aten::zeros",
+      "cuda_time_ms": 0.0,
+      "calls": 1140
+    },
+    {
+      "op": "aten::empty",
+      "cuda_time_ms": 0.0,
+      "calls": 4580
+    }
+  ],
+  "top3_cpu": [
+    {
+      "op": "scheduler_step",
+      "cpu_time_ms": 40507.93,
+      "calls": 20
+    },
+    {
+      "op": "aten::slice",
+      "cpu_time_ms": 10358.96,
+      "calls": 159360
+    },
+    {
+      "op": "aten::_local_scalar_dense",
+      "cpu_time_ms": 4731.42,
+      "calls": 340
+    }
+  ],
+  "trace_path": "C:\\Users\\LENOVO\\Desktop\\MICROINFER\\analysis\\profiles\\profiler_trace.json",
+  "summary_path": "C:\\Users\\LENOVO\\Desktop\\MICROINFER\\analysis\\profiles\\profiler_summary.txt"
+}

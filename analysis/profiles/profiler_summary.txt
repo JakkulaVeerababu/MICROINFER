@@ -1,0 +1,59 @@
+MicroInfer Phase 3 Scheduler Profiler Summary
+Batch Size: 8 concurrent sequences
+Steps profiled: 20
+Model: Qwen/Qwen2.5-1.5B-Instruct
+================================================================================
+
+-------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                             Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+-------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                   scheduler_step        63.07%       40.508s       100.00%       64.227s        3.211s        7.618s        11.86%       64.229s        3.211s            20  
+                                     aten::linear         0.47%     302.191ms         1.50%     962.162ms     244.203us     188.578ms         0.29%       27.120s       6.883ms          3940  
+                                     aten::matmul         0.26%     167.882ms         0.52%     334.821ms     146.851us      80.928ms         0.13%       26.459s      11.605ms          2280  
+                                         aten::mm         0.17%     110.473ms         0.17%     110.473ms      48.882us       26.301s        40.95%       26.301s      11.638ms          2260  
+                                      aten::slice        16.13%       10.359s        16.41%       10.537s      66.124us       17.569s        27.35%       23.312s     146.284us        159360  
+                                 aten::as_strided         0.34%     218.486ms         0.34%     218.486ms       1.150us        6.079s         9.46%        6.079s      31.987us        190040  
+                                        aten::pow         0.11%      69.614ms         0.11%      70.639ms      61.964us        3.084s         4.80%        3.103s       2.722ms          1140  
+                                     aten::select         4.84%        3.108s         4.88%        3.132s     168.565us     537.120ms         0.84%     753.450ms      40.552us         18580  
+                                      aten::copy_         4.54%        2.918s         4.54%        2.918s     135.201us     733.071ms         1.14%     733.071ms      33.970us         21580  
+                                  aten::transpose         0.37%     234.954ms         0.38%     246.848ms      29.247us     282.872ms         0.44%     359.427ms      42.586us          8440  
+                                    aten::reshape         0.24%     152.625ms         0.45%     286.338ms      50.412us     147.175ms         0.23%     330.497ms      58.186us          5680  
+                                         aten::to         0.10%      62.775ms         0.48%     306.128ms      85.511us      52.768ms         0.08%     287.364ms      80.269us          3580  
+                                          aten::t         0.13%      84.893ms         0.29%     183.781ms      46.645us      70.357ms         0.11%     276.127ms      70.083us          3940  
+                                   aten::_to_copy         0.22%     138.574ms         0.38%     243.354ms     102.249us      88.085ms         0.14%     234.596ms      98.570us          2380  
+               aten::scaled_dot_product_attention         0.03%      18.274ms         0.33%     213.161ms     380.644us      14.961ms         0.02%     232.551ms     415.270us           560  
+    aten::_scaled_dot_product_efficient_attention         0.09%      57.246ms         0.30%     194.886ms     348.012us      41.807ms         0.07%     217.590ms     388.554us           560  
+                                        aten::mul         0.20%     131.659ms         0.20%     131.659ms      25.715us     200.214ms         0.31%     200.214ms      39.104us          5120  
+                                      aten::zeros         0.11%      70.866ms         0.24%     152.059ms     133.385us      72.415ms         0.11%     178.908ms     156.937us          1140  
+                                      aten::addmm         0.15%      98.112ms         0.15%      98.112ms      58.400us     150.417ms         0.23%     150.417ms      89.534us          1680  
+                                      aten::clone         0.09%      55.060ms         0.18%     117.570ms     104.973us      46.342ms         0.07%     120.646ms     107.720us          1120  
+                                      aten::empty         0.07%      47.676ms         0.07%      47.676ms      10.410us     104.005ms         0.16%     104.005ms      22.709us          4580  
+               aten::_efficient_attention_forward         0.12%      77.250ms         0.13%      84.012ms     150.022us      61.820ms         0.10%      97.502ms     174.111us           560  
+                                  aten::unsqueeze         0.09%      55.762ms         0.09%      58.140ms      25.278us      65.944ms         0.10%      93.700ms      40.739us          2300  
+                              aten::empty_strided         0.02%      12.403ms         0.02%      12.403ms       5.211us      89.010ms         0.14%      89.010ms      37.399us          2380  
+                                        aten::add         0.14%      86.907ms         0.14%      86.907ms      25.712us      85.302ms         0.13%      85.302ms      25.237us          3380  
+                                        aten::cat         0.10%      64.373ms         0.10%      64.373ms      28.483us      83.077ms         0.13%      83.077ms      36.760us          2260  
+                                       aten::view         0.04%      22.730ms         0.04%      22.730ms       2.870us      67.559ms         0.11%      67.559ms       8.530us          7920  
+                                      aten::zero_         0.04%      28.381ms         0.08%      48.255ms      42.329us      31.345ms         0.05%      61.434ms      53.889us          1140  
+                                     aten::expand         0.05%      31.773ms         0.05%      33.183ms      28.121us      39.434ms         0.06%      52.490ms      44.483us          1180  
+                                      aten::fill_         0.04%      26.832ms         0.05%      30.446ms      23.420us      37.916ms         0.06%      43.165ms      33.204us          1300  
+-------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 64.227s
+Self CUDA time total: 64.229s
+
+
+
+--- CPU vs CUDA Time Breakdown ---
+Total CPU self-time : 64226.54 ms  (100.0%)
+Total CUDA self-time: 0.00 ms  (0.0%)
+Ratio CPU:CUDA      : 100.0% : 0.0%
+
+--- Top 3 Ops by CUDA time ---
+  1. scheduler_step                            CUDA=0.00ms  calls=20
+  2. aten::zeros                               CUDA=0.00ms  calls=1140
+  3. aten::empty                               CUDA=0.00ms  calls=4580
+
+--- Top 3 Ops by CPU time ---
+  1. scheduler_step                            CPU=40507.93ms  calls=20
+  2. aten::slice                               CPU=10358.96ms  calls=159360
+  3. aten::_local_scalar_dense                 CPU=4731.42ms  calls=340

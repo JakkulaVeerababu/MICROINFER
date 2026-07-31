@@ -6,7 +6,7 @@
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![PyTorch 2.5.1](https://img.shields.io/badge/PyTorch-2.5.1%2Bcu121-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![CUDA 12.1](https://img.shields.io/badge/CUDA-12.1-76B900?style=flat-square&logo=nvidia&logoColor=white)](https://developer.nvidia.com/cuda-toolkit)
-[![PyTest 33 Passed](https://img.shields.io/badge/PyTest-33%2F33%20Passed-2ecc71?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org)
+[![PyTest 43 Passed](https://img.shields.io/badge/PyTest-43%2F43%20Passed-2ecc71?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org)
 [![License MIT](https://img.shields.io/badge/License-MIT-blue.style=flat-square)](LICENSE)
 
 **MicroInfer** is a high-performance transformer serving engine engineered from first principles to implement, profile, and benchmark core LLM serving algorithms: **Pre-allocated Key-Value (KV) Caching**, **Dynamic Request Scheduler with Lifecycle Management**, and **8-Bit INT8 Weight Quantization**.
@@ -25,7 +25,7 @@
    - **Decode Phase (genuinely tensor-batched):** All `B` already-running sequences are decoded in a single GPU call. Their individual KV-cache slots are sliced and copied in Python into dense `(B, num_kv_heads, S_max, head_dim)` padded tensors; `batch_input_ids` is shaped `(B, 1)`; the forward pass `model(input_ids=batch_input_ids, ...)` runs once for the entire batch (`scheduler.py` lines 183–218).
 
    > [!WARNING]
-   > While the **Decode** pass genuinely stacks `B` concurrent sequences into a padded `(B, 1)` tensor, the **Prefill** pass remains sequential (one `model()` call per new sequence). Additionally, the per-step Python overhead of slicing and padding individual KV-cache slots consumes ~57% of wall-clock step time before the CUDA kernel launches, leaving the GPU utilization at a mean of 36.1%.
+   > While the **Decode** pass genuinely stacks `B` concurrent sequences into a padded `(B, 1)` tensor, the **Prefill** pass remains sequential (one `model()` call per new sequence). Real profiler data (`python benchmarks/profile_scheduler.py`, 20 decode steps, batch=8) shows **63.1% of step wall-clock time is Python bookkeeping** (`scheduler_step` self-CPU = 40,508 ms over 20 steps). The dominant CUDA kernel is `aten::mm` (matrix multiply, **40.95%** of CUDA time), but `aten::slice` (KV-cache extraction) consumes **27.35%** of CUDA time across **159,360 calls** — directly measuring the per-sequence per-layer KV slot loop. GPU SM utilization is sampled live per run via `GpuUtilSampler` (nvidia-smi, 1 s interval) — see `benchmarks/results/phase3_scheduler.json` for the measured `gpu_utilization_pct` from the most recent run.
 
 3. **INT8 Weight-Only Quantization Tier (`src/quant_loader.py`):**
    - Integrates the industry-standard `bitsandbytes` library (`load_in_8bit=True`) to evaluate 8-bit weight matrix multiplication, serving as a quantized benchmark tier to profile VRAM footprint savings (-40.1% memory reduction) and dequantization trade-offs vs FP16.
@@ -112,25 +112,29 @@ MICROINFER/
 │   ├── cached_generate.py              # Phase 2 2-Phase Incremental Generator (O(1) step)
 │   ├── scheduler.py                    # Phase 3 Dynamic Request Scheduler with Lifecycle Management
 │   ├── quant_loader.py                 # Phase 4 8-Bit Quantized Weight Model Loader
-│   └── quant_generate.py               # Phase 4 INT8 Quantized Generator Engine
+│   ├── quant_generate.py               # Phase 4 INT8 Quantized Generator Engine
+│   └── engine.py                       # Unified MicroInferEngine entry point (routes to all 4 backends)
 │
 ├── benchmarks/                         # Benchmarking & Profiling Harnesses
 │   ├── baseline_hf.py                  # Phase 0 HuggingFace .generate() control baseline
 │   ├── benchmark_naive.py              # Phase 1 Naive Generator latency & scaling profiler
 │   ├── benchmark_cached.py             # Phase 2 KV-Cache speedup & flat step latency profiler
-│   ├── benchmark_scheduler.py          # Phase 3 Continuous batching mixed workload profiler
+│   ├── benchmark_scheduler.py          # Phase 3: waves, --staggered, --capacity, --compare modes
 │   ├── benchmark_quant.py              # Phase 4 INT8 quantization memory & latency profiler
 │   ├── baseline_vllm.py                # Phase 5 Production vLLM reference engine harness
+│   ├── profile_scheduler.py            # torch.profiler harness: Phase 3 op-level CPU/CUDA breakdown
 │   └── results/                        # Raw JSON Benchmark Results Export
 │
 ├── analysis/                           # Analysis Scripts, Visualizations & Technical Reports
 │   ├── ANALYSIS.md                     # MLSys technical whitepaper & system design report
 │   ├── plot_master.py                  # Plotter for master comparative throughput & VRAM charts
-│   └── plots/                          # Rendered PNG Benchmark Charts
+│   ├── plots/                          # Rendered PNG Benchmark Charts
+│   └── profiles/                       # torch.profiler traces & summaries (profiler_summary.txt, profiler_trace.json)
 │
-└── tests/                              # Automated PyTest Test Suites (33 Tests)
+└── tests/                              # Automated PyTest Test Suites (43 Tests)
+    ├── test_engine.py                  # 10 tests for MicroInferEngine unified entry point
     ├── test_master_suite.py            # Master test suite verifying all 6 phases
-    └── ...                             # 20 additional test modules (33/33 tests passing)
+    └── ...                             # 31 additional test modules (43/43 tests passing)
 ```
 
 ---
@@ -151,27 +155,57 @@ pip install -r requirements.txt
 pip install bitsandbytes>=0.50.0
 ```
 
-### 3. Run Test Suite (33 Automated Tests)
+### 3. Run Test Suite (43 Automated Tests)
 ```bash
 python -m pytest tests/ -v
 ```
 
 ### 4. Run Benchmarks
 ```bash
-# Run Phase 0 HuggingFace Baseline
+# Phase 0: HuggingFace Baseline
 python benchmarks/baseline_hf.py
 
-# Run Phase 2 KV-Cache Benchmark
+# Phase 2: KV-Cache Benchmark
 python benchmarks/benchmark_cached.py
 
-# Run Phase 3 Dynamic Request Scheduler Benchmark
+# Phase 3: Standard 16-req wave benchmark (with live GPU utilization sampling)
 python benchmarks/benchmark_scheduler.py
 
-# Run Phase 4 INT8 Quantized Benchmark
+# Phase 3: Staggered-arrival varying-length scenario
+python benchmarks/benchmark_scheduler.py --staggered
+
+# Phase 3: Static-vs-Continuous batching head-to-head comparison
+python benchmarks/benchmark_scheduler.py --compare
+
+# Phase 3: Capacity ceiling (ramps until CUDA OOM)
+python benchmarks/benchmark_scheduler.py --capacity
+
+# Phase 3: Profiler — op-level CPU/CUDA breakdown (Chrome trace + summary)
+python benchmarks/profile_scheduler.py
+
+# Phase 4: INT8 Quantized Benchmark
 python benchmarks/benchmark_quant.py
 
-# Run Phase 5 vLLM Reference Benchmark
+# Phase 5: vLLM/Fallback Benchmark
 python benchmarks/baseline_vllm.py
+```
+
+### 5. Unified Engine API (`src/engine.py`)
+```python
+from src.engine import MicroInferEngine
+
+# Phase 2 KV-Cache mode
+engine = MicroInferEngine({"mode": "cached"})
+outputs = engine.generate(["What is a transformer?"], max_new_tokens=64)
+print(outputs[0])
+
+# Phase 3 Scheduler mode (continuous batching)
+engine = MicroInferEngine({"mode": "scheduled"})
+outputs = engine.generate(["Explain KV-caching.", "What is PagedAttention?"], max_new_tokens=128)
+
+# Phase 4 INT8 Quantized mode
+engine = MicroInferEngine({"mode": "quantized"})
+outputs = engine.generate(["Summarize BERT in 3 sentences."], max_new_tokens=64)
 ```
 
 ---

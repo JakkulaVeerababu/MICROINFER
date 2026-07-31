@@ -1,0 +1,65 @@
+{
+  "phase": "Phase 3 - Static vs Continuous Batching Comparison",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "workload": [
+    {
+      "arrival_t": 0.0,
+      "prompt": "What is the capital of France?",
+      "max_new_tokens": 16
+    },
+    {
+      "arrival_t": 0.5,
+      "prompt": "Write a quicksort in python.",
+      "max_new_tokens": 64
+    },
+    {
+      "arrival_t": 1.2,
+      "prompt": "Explain transformer attention.",
+      "max_new_tokens": 128
+    },
+    {
+      "arrival_t": 1.5,
+      "prompt": "Translate hello to Spanish.",
+      "max_new_tokens": 8
+    },
+    {
+      "arrival_t": 2.0,
+      "prompt": "Why is the sky blue? Explain in extreme ",
+      "max_new_tokens": 256
+    },
+    {
+      "arrival_t": 2.5,
+      "prompt": "Tell me a short joke.",
+      "max_new_tokens": 32
+    },
+    {
+      "arrival_t": 3.0,
+      "prompt": "Summarize the history of Rome.",
+      "max_new_tokens": 200
+    },
+    {
+      "arrival_t": 3.5,
+      "prompt": "What is 2+2?",
+      "max_new_tokens": 4
+    }
+  ],
+  "static_batch": {
+    "wall_time_s": 53.647,
+    "total_tokens": 708,
+    "throughput_tok_per_sec": 13.2,
+    "mean_latency_ms": 6705.84,
+    "gpu_idle_estimate_ms": 0.0
+  },
+  "continuous_batch": {
+    "wall_time_s": 27.901,
+    "total_tokens": 708,
+    "throughput_tok_per_sec": 25.38,
+    "mean_latency_ms": 7863.4,
+    "gpu_idle_estimate_ms": 0.0
+  },
+  "comparison": {
+    "throughput_gain_pct": 92.3,
+    "latency_reduction_pct": -17.3,
+    "wall_time_reduction_pct": 48.0
+  }
+}
