@@ -19,32 +19,31 @@
    - `src/kv_cache.py` implements a custom pre-allocated 5D CUDA tensor store (`KVCache`) — owns memory up front with no Python-list growth. It subclasses HuggingFace's `Cache` and `CacheLayerMixin` interfaces for native model integration.
    - `src/cached_generate.py` implements a **two-phase Prefill/Decode loop** with independent CUDA-synchronised TTFT and TPOT timers, driving `KVCache.from_model(model)` directly as the live cache object during benchmark execution.
 
-2. ### Phase 3: Continuous Batching Scheduler
+2. **Dynamic Request Scheduler & Queue Engine (`src/scheduler.py`):**
+   - Implements an iteration-level request queue scheduler managing `SequenceState` lifecycles (`WAITING` $\to$ `RUNNING` $\to$ `FINISHED`), handling dynamic in-flight request admission and completed request eviction.
+   - **Prefill Phase (sequential):** Newly admitted sequences are prefilled one-at-a-time via a `for seq in prefill_seqs` loop (`scheduler.py` lines 122–149), each triggering a separate `model(input_ids=tensor([1, P]))` forward call.
+   - **Decode Phase (genuinely tensor-batched):** All `B` already-running sequences are decoded in a single GPU call. Their individual KV-cache slots are sliced and copied in Python into dense `(B, num_kv_heads, S_max, head_dim)` padded tensors; `batch_input_ids` is shaped `(B, 1)`; the forward pass `model(input_ids=batch_input_ids, ...)` runs once for the entire batch (`scheduler.py` lines 183–218).
 
-Manages sequence lifecycles independently using iteration-level granularity, converting the batch into a dynamic queue (WAITING $\rightarrow$ RUNNING $\rightarrow$ FINISHED). The engine supports dynamic arrival and eviction.
+   > [!WARNING]
+   > While the **Decode** pass genuinely stacks `B` concurrent sequences into a padded `(B, 1)` tensor, the **Prefill** pass remains sequential (one `model()` call per new sequence). Additionally, the per-step Python overhead of slicing and padding individual KV-cache slots consumes ~57% of wall-clock step time before the CUDA kernel launches, leaving the GPU utilization at a mean of 36.1%.
 
-> [!WARNING]
-> While the queue logic handles continuous batching, the actual forward pass is still fundamentally unbatched across sequences due to non-uniform sequence lengths preventing native `(B, T)` tensor stacking without padding. True tensor batching requires PagedAttention or robust ragged-tensor support.
+3. **INT8 Weight-Only Quantization Tier (`src/quant_loader.py`):**
+   - Integrates the industry-standard `bitsandbytes` library (`load_in_8bit=True`) to evaluate 8-bit weight matrix multiplication, serving as a quantized benchmark tier to profile VRAM footprint savings (-40.1% memory reduction) and dequantization trade-offs vs FP16.
 
-#### Realistic Workloads (Staggered Arrival & Capacity Ceiling)
+4. **Staggered Arrival & Capacity Ceiling (Phase 3 Extended Benchmarks):**
 
-To validate the scheduler against real-world traffic patterns, two extended scenarios were benchmarked (see `analysis/ANALYSIS.md` for in-depth trace reasoning):
+   To validate the scheduler against real-world traffic patterns, two extended scenarios were benchmarked (see `analysis/ANALYSIS.md` for in-depth trace reasoning):
 
-1. **Staggered Arrivals (Varying Lengths):** Requests of varying prompt/generation lengths were dispatched into the queue dynamically over a 3.5-second period, rather than all simultaneously.
-2. **Capacity Ceiling (OOM Test):** Batch size was exponentially increased until VRAM exhaustion to calculate the hardware limit. Windows Unified Memory paging kicks in at 6GB, preventing a hard crash until System RAM exhausts, but the strict 6GB hardware boundary is computed below.
+   - **Staggered Arrivals (Varying Lengths):** Requests of varying prompt/generation lengths were dispatched into the queue dynamically over a 3.5-second period, rather than all simultaneously.
+   - **Capacity Ceiling (OOM Test):** Batch size was exponentially increased until VRAM exhaustion to calculate the hardware limit. Windows Unified Memory paging kicks in at 6 GB, preventing a hard crash until System RAM exhausts, but the strict 6 GB hardware boundary is computed below.
 
-| Benchmark Scenario | Metric | Result (RTX 4050 6GB) |
-| :--- | :--- | :--- |
-| **Staggered Arrivals (Dynamic Load)** | Aggregate Throughput | **40.29 tok/s** |
-| | Generation Wall Time | 17.57 s |
-| **Capacity Ceiling (6GB VRAM Limit)** | Base Model VRAM Allocation | **2.88 GB** |
-| | VRAM Cost per Sequence | **2.22 MB / seq** |
-| | Max Hardware Capacity | **1,439 concurrent requests** |
-
----
-
-### Phase 4: INT8 Weight Quantization Tier (`src/quant_loader.py`):**
-   - Integrates the industry-standard `bitsandbytes` library (`load_in_8bit=True`) to evaluate 8-bit weight matrix multiplication, serving as a quantized benchmark tier to profile VRAM footprint savings (-42.1% memory reduction) and dequantization trade-offs vs FP16.
+   | Benchmark Scenario | Metric | Result (RTX 4050 6GB) |
+   | :--- | :--- | :--- |
+   | **Staggered Arrivals (Dynamic Load)** | Aggregate Throughput | **40.29 tok/s** |
+   | | Generation Wall Time | 17.57 s |
+   | **Capacity Ceiling (6GB VRAM Limit)** | Base Model VRAM Allocation | **2.88 GB** |
+   | | VRAM Cost per Sequence | **2.22 MB / seq** |
+   | | Max Hardware Capacity | **1,439 concurrent requests** |
 
 ---
 
@@ -54,19 +53,19 @@ To validate the scheduler against real-world traffic patterns, two extended scen
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Phase 0** | HuggingFace `.generate()` Baseline | **78.76 ± 12.51 ms** | **76.03 ± 9.71 ms/tok** | **13.68 ± 2.53 tok/s** | **2.89 GB** | — (FP16 ref) | $\mathcal{O}(N)$ (HF DynamicCache) |
 | **Phase 1** | Naive Generator (No Cache) | **80.87 ± 9.26 ms** | **80.69 ± 2.98 ms/tok** | **12.40 ± 0.51 tok/s** | **2.94 GB** | — (FP16) | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
-| **Phase 2** | KV-Cache Generator Engine | **95.00 ± 8.22 ms** | **89.08 ± 2.61 ms/tok** | **11.20 ± 0.33 tok/s** | **2.90 GB** | — (FP16) | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Dynamic Request Scheduler with Tensor-Batched Decode | **93.67 ± 4.09 ms** | **N/A (Concurrent)** | **55.57 ± 1.69 tok/s** | **3.03 GB** | — (FP16) | Batched CUDA Decode (16-req wave) |
+| **Phase 2** | KV-Cache Generator Engine<br><small>*⚠ Slower than Naive at N=64 — FFN projection cost dominates at short sequences; KV-cache wins decisively at N≥512. See [Phase 2 analysis](#) in ANALYSIS.md.*</small> | **95.00 ± 8.22 ms** | **89.08 ± 2.61 ms/tok** | **11.20 ± 0.33 tok/s** | **2.90 GB** | — (FP16) | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
+| **Phase 3** | Continuous Batch Scheduler — Batched Decode, Sequential Prefill<br><small>*Decode: single `model()` call with `(B=16, 1)` input tensor. Prefill: sequential per-sequence. See scheduler.py L183–218.*</small> | **93.67 ± 4.09 ms** | **N/A (Concurrent)** | **55.57 ± 1.69 tok/s** | **3.03 GB** | — (FP16) | Batched CUDA Decode (16-req wave) |
 | **Phase 4** | INT8 Quantized Model Engine | **416.04 ± 43.34 ms** | **340.29 ± 7.89 ms/tok** | **2.93 ± 0.07 tok/s** | **1.74 GB** | **+0.019 ppl (+0.52%) — NEGLIGIBLE** | 8-Bit Weights (-40.1% VRAM) |
-| **Phase 5** | vLLM (Fallback Scheduler Under Load) | **N/A (Batched)** | **N/A (Batched)** | **128.52 ± 0.69 tok/s** | **3.09 GB** | — (FP16) | PagedAttention Block Allocator (16-req wave) |
+| **Phase 5** | MicroInfer Fallback Scheduler — 16-req Wave<br><small>*vLLM benchmarking blocked by WSL2 CUDA/UVA constraints on this hardware — see Phase 5 note below.*</small> | **N/A (Batched)** | **N/A (Batched)** | **128.52 ± 0.69 tok/s** | **3.09 GB** | — (FP16) | MicroInfer Fallback Scheduler (16-req wave) |
 
 [^1]: Master table reported at canonical $N=64$. Across sequence length scaling $N \in \{64, 256, 512, 1024, 2048\}$, uncached Naive TPOT scales from **57.12 ms/tok** at $N=64$ $\rightarrow$ **63.53 ms/tok** (+11.2% at $N=256$) $\rightarrow$ **70.18 ms/tok** (+10.5% at $N=512$) $\rightarrow$ **83.45 ms/tok** (+18.9% at $N=1024$) $\rightarrow$ **110.12 ms/tok** (+32.0% at $N=2048$, a **+92.8% total decode slowdown**). In contrast, HF cached TPOT remains nearly flat (**50.18 ms/tok** to **55.04 ms/tok**, +9.7% total growth). At smaller sequence lengths ($N \le 256$), the $\mathcal{O}(N^2)$ quadratic attention gap is modest because fixed per-token FFN parameter projection cost (~1.5B weights) dominates GPU execution time per step. See `analysis/plots/phase1_scaling_crossover.png`.
 
 > **Key Performance Milestones (Mean ± Std Dev):**
 > - **KV-Caching Architecture:** Validated the caching architecture. While local thermals caused run-to-run noise, the $O(1)$ scaling behavior of KV-caching relative to Naive generation holds true across sequence lengths (detailed in Analysis).
-> - **Continuous Batching Gain:** True CUDA tensor-level batched decode pass increased concurrent throughput to **55.57 ± 1.69 tok/s**, successfully surpassing Phase 2's single-stream throughput by massively parallelizing sequence generation across the GPU.
+> - **Continuous Batching Gain:** The Decode pass of the Phase 3 scheduler stacks all `B` active sequences into a single `(B, 1)` input tensor and one padded `(B, num_kv_heads, S_max, head_dim)` KV-cache tensor per layer, enabling a single GPU forward call across all concurrent sequences. This raised throughput to **55.57 ± 1.69 tok/s**. Note: the Prefill pass remains sequential (one `model()` call per new arrival).
 > - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.90 GB down to 1.74 GB** (**-40.0% GPU memory savings**).
 > - **INT8 Accuracy (Perplexity):** Measured sliding-window perplexity on a held-out 321-token Wikipedia corpus. **FP16: 3.696** → **INT8: 3.715** → **Delta: +0.019 ppl (+0.52%)** — classified as **NEGLIGIBLE**. The `bitsandbytes` mixed-precision strategy (outlier channels kept in FP16, threshold=6σ) prevents meaningful accuracy regression while achieving the full VRAM savings.
-> - **Industrial Baseline Fallback:** Due to `vLLM` lacking WSL2 CUDA/UVA toolkit availability on this device, the Fallback Phase 5 Scheduler was used. It sustained **128.52 ± 0.69 tok/sec** under heavy 16-request concurrent load without failure.
+> - **Phase 5 (vLLM blocked):** vLLM benchmarking was blocked by WSL2 CUDA/UVA constraints on this hardware (missing `nvcc` for `flashinfer` compilation in WSL2 Ubuntu 24.04). The MicroInfer Fallback Scheduler sustained **128.52 ± 0.69 tok/s** under 16-request concurrent load — see Phase 5 note below for full hardware constraint details.
 
 > [!NOTE]
 > **Phase 5 — vLLM WSL2 Benchmark Execution:** Native Windows binaries (`vllm._C_stable_libtorch`) are not compiled by upstream vLLM. Executing `benchmarks/baseline_vllm.py` inside **WSL2 Ubuntu 24.04** on this device failed due to UVA unavailability in `vllm`'s V1 engine and missing `nvcc` for `flashinfer` compilation. Therefore, the **Fallback Scheduler** was utilized to measure sustained Phase 5 load (16 concurrent requests), providing a profiler-backed, honest comparison at **128.52 ± 0.69 tok/s aggregate throughput**.
