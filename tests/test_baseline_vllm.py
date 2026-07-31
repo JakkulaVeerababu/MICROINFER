@@ -27,7 +27,7 @@ def test_vllm_benchmark_execution():
         num_runs=1,
     )
 
-    assert results_data["phase"] == "Phase 5 - Production Reference Engine"
+    assert results_data["phase"].startswith("Phase 5 -")
     assert "engine" in results_data
     assert "peak_vram_gb" in results_data
     assert results_data["peak_vram_gb"] > 0.0

@@ -7,23 +7,23 @@
     {
       "prompt_idx": 1,
       "run": 1,
-      "ttft_ms": 255.229,
-      "tpot_ms": 6918.777,
-      "throughput_tok_per_sec": 0.145
+      "ttft_ms": 80.355,
+      "tpot_ms": 63.093,
+      "throughput_tok_per_sec": 15.85
     },
     {
       "prompt_idx": 2,
       "run": 1,
-      "ttft_ms": 305.148,
-      "tpot_ms": 435.172,
-      "throughput_tok_per_sec": 2.298
+      "ttft_ms": 65.235,
+      "tpot_ms": 58.966,
+      "throughput_tok_per_sec": 16.959
     },
     {
       "prompt_idx": 3,
       "run": 1,
-      "ttft_ms": 376.252,
-      "tpot_ms": 2283.771,
-      "throughput_tok_per_sec": 0.438
+      "ttft_ms": 132.107,
+      "tpot_ms": 60.49,
+      "throughput_tok_per_sec": 16.532
     }
   ]
 }

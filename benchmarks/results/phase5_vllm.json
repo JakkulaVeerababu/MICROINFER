@@ -14,9 +14,9 @@
   "honest_note": "No synthetic multipliers. vLLM path uses PagedAttention if installed. Fallback path uses MicroInfer ContinuousBatchScheduler under same concurrency load as Phase 3. Results are directly comparable.",
   "aggregate": {
     "throughput_tok_per_sec": {
-      "mean": 0.95,
-      "p50": 0.95,
-      "p99": 0.95
+      "mean": 22.22,
+      "p50": 22.22,
+      "p99": 22.22
     }
   },
   "wave_results": [
@@ -24,14 +24,14 @@
       "wave": 1,
       "n_completed": 2,
       "total_tokens": 10,
-      "wall_time_s": 10.578,
-      "aggregate_throughput": 0.95,
-      "mean_ttft_ms": 828.08,
-      "p50_ttft_ms": 828.08,
-      "p99_ttft_ms": 831.47,
-      "mean_latency_ms": 5288.43,
-      "p50_latency_ms": 5288.43,
-      "p99_latency_ms": 5292.4
+      "wall_time_s": 0.45,
+      "aggregate_throughput": 22.22,
+      "mean_ttft_ms": 63.52,
+      "p50_ttft_ms": 63.52,
+      "p99_ttft_ms": 64.84,
+      "mean_latency_ms": 353.76,
+      "p50_latency_ms": 353.76,
+      "p99_latency_ms": 355.08
     }
   ]
 }
