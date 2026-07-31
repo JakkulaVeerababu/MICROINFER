@@ -15,13 +15,13 @@
 | **Phase 2** | KV-Cache Generator | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
 | **Phase 3** | Dynamic Request Scheduler with Lifecycle Management | **58.10 ms** | **N/A (Concurrent)** | **19.15 tok/s** | **2.96 GB** | Dynamic Request Scheduling (16-req wave) |
 | **Phase 4** | INT8 Quantized Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-42.1% VRAM) |
-| **Phase 5** | Production Reference Engine | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | Fallback Scheduler (16-req wave) |
+| **Phase 5** | Fallback Scheduler Under Concurrent Load (vLLM unavailable on Windows — see note) | **N/A (Wave)** | **N/A (Concurrent)** | **12.57 tok/s** | **3.02 GB** | MicroInfer ContinuousBatchScheduler (16-req wave) |
 
 ---
 
 ## Anomalies & Gap Analysis
 
-### 1. Phase 2 (KV-Cache) vs Phase 3 (Scheduler) & Phase 5 (Fallback) Concurrency Throughput
+### 1. Phase 2 (KV-Cache) vs Phase 3 (Scheduler) & Phase 5 (Fallback Scheduler) Concurrency Throughput
 - **Observed Result:** Phase 2 single-request KV-cache generation achieves **21.30 tok/s**, while Phase 3 scheduler achieves **19.15 tok/s** under 16 concurrent requests and Phase 5 fallback achieves **12.57 tok/s**.
 - **Likely Mechanism:** In `src/scheduler.py`, active sequences are stepped in a Python `for seq in self.running_batch:` loop rather than stacked into a single batched CUDA tensor matrix multiplication (`(B, 1)` GEMM). Each step loop pays Python interpreter dispatch overhead and executes individual PyTorch forward calls per sequence. Thus, under concurrent load, aggregate throughput is capped near single-request throughput, and individual request latency scales with batch size (~3.2s per 16-request wave).
 

@@ -104,13 +104,23 @@ class KVCache(Cache):
             KVCacheLayer(self.k_cache[i], self.v_cache[i])
             for i in range(num_layers)
         ]
-        super().__init__(layers=layers)
+        try:
+            super().__init__(layers=layers)
+        except TypeError:
+            super().__init__()
+            self.layers = layers
 
     @property
     def current_len(self) -> int:
         if self.layers:
             return self.layers[0].get_seq_length()
         return 0
+
+    def get_seq_length(self, layer_idx: Optional[int] = 0) -> int:
+        return self.current_len
+
+    def get_max_length(self) -> Optional[int]:
+        return self.max_seq_len
 
     @current_len.setter
     def current_len(self, val: int) -> None:
@@ -136,28 +146,23 @@ class KVCache(Cache):
         1. Legacy MicroInfer signature: update(layer_idx=0, new_k=k, new_v=v) or update(0, k, v)
         2. HuggingFace Cache signature: update(key_states, value_states, layer_idx) or update(key_states=k, value_states=v, layer_idx=0)
         """
-        # Keyword dispatch
-        if layer_idx is not None:
-            k_tensor = new_k if new_k is not None else key_states
-            v_tensor = new_v if new_v is not None else value_states
-            return self.layers[layer_idx].update(k_tensor, v_tensor, *args, **kwargs)
-
-        # Positional dispatch
         if isinstance(first_arg, int):
             # Legacy signature: update(layer_idx, new_k, new_v)
             idx = first_arg
             k_tensor = second_arg
             v_tensor = third_arg
-            return self.layers[idx].update(k_tensor, v_tensor, *args, **kwargs)
-        elif first_arg is not None and second_arg is not None and isinstance(third_arg, int):
-            # HF signature: update(key_states, value_states, layer_idx)
+        elif torch.is_tensor(first_arg) and torch.is_tensor(second_arg):
+            # HF positional signature: update(key_states, value_states, layer_idx, ...)
             k_tensor = first_arg
             v_tensor = second_arg
-            idx = third_arg
-            return self.layers[idx].update(k_tensor, v_tensor, *args, **kwargs)
-        elif key_states is not None and value_states is not None:
-            idx = third_arg if third_arg is not None else (args[0] if args else 0)
-            return self.layers[idx].update(key_states, value_states, *args, **kwargs)
+            idx = third_arg if isinstance(third_arg, int) else (layer_idx if layer_idx is not None else 0)
+        else:
+            # Keyword signature: update(key_states=..., value_states=..., layer_idx=...) or update(new_k=..., new_v=..., layer_idx=...)
+            k_tensor = key_states if key_states is not None else new_k
+            v_tensor = value_states if value_states is not None else new_v
+            idx = layer_idx if layer_idx is not None else (third_arg if isinstance(third_arg, int) else 0)
+
+        return self.layers[idx].update(k_tensor, v_tensor, *args, **kwargs)
 
         raise ValueError(f"Invalid parameters to KVCache.update: first_arg={type(first_arg)}, layer_idx={layer_idx}")
 

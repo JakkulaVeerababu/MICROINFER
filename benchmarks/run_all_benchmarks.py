@@ -96,7 +96,7 @@ def print_master_table(results: dict):
         "phase2": "Phase 2 - KV-Cache",
         "phase3": "Phase 3 - Sched (16-concurrent)",
         "phase4": "Phase 4 - INT8 Quant",
-        "phase5": "Phase 5 - Ref Engine (16-concurrent)",
+        "phase5": "Phase 5 - Fallback Scheduler (16-concurrent)",
     }
     batch_phases = {"phase3", "phase5"}
 
@@ -183,7 +183,7 @@ def main():
 
     if 5 in phases_to_run:
         from benchmarks.baseline_vllm import run_vllm_benchmark
-        results["phase5"] = run_phase("PHASE 5: Production Reference Engine", run_vllm_benchmark)
+        results["phase5"] = run_phase("PHASE 5: Fallback Scheduler Under Concurrent Load", run_vllm_benchmark)
 
     print_master_table(results)
 

@@ -31,8 +31,7 @@ def test_phase5_artifacts_exist():
     with open(results_file, "r") as f:
         data = json.load(f)
 
-    # New phase string (removed "vLLM Reference" to be engine-agnostic)
-    assert data["phase"] == "Phase 5 - Production Reference Engine", (
+    assert data["phase"] == "Phase 5 - Fallback Scheduler Under Concurrent Load", (
         f"Unexpected phase string: {data['phase']!r}. "
         "Re-run `python benchmarks/baseline_vllm.py` to regenerate the results file."
     )

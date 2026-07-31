@@ -41,14 +41,14 @@ def load_model_and_tokenizer(
     try:
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
-            dtype=torch_dtype,
+            torch_dtype=torch_dtype,
             device_map=device,
             trust_remote_code=True,
         )
     except Exception:
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
-            dtype=torch_dtype,
+            torch_dtype=torch_dtype,
             device_map=device,
             trust_remote_code=True,
             local_files_only=True,
