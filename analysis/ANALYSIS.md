@@ -8,14 +8,14 @@
 
 ## Master Executive Performance Matrix
 
-| Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/sec) | Peak VRAM (GB) | Performance Scaling Model |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (Built-in DynamicCache) |
-| **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
-| **Phase 2** | KV-Cache Generator | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Dynamic Request Scheduler with Tensor-Batched Decode | **58.10 ms** | **N/A (Concurrent)** | **22.81 tok/s** | **2.96 GB** | Batched CUDA Decode (16-req wave) |
-| **Phase 4** | INT8 Quantized Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weight Quantization (-42.1% VRAM) |
-| **Phase 5** | Fallback Scheduler Under Concurrent Load (vLLM unavailable on Windows — see note) | **N/A (Wave)** | **N/A (Concurrent)** | **22.81 tok/s** | **3.02 GB** | MicroInfer ContinuousBatchScheduler (16-req wave) |
+| Phase | Serving Mechanism | TTFT (ms) | TPOT (ms/token) | Throughput (tok/sec) | Peak VRAM (GB) | Accuracy Impact | Performance Scaling Model |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | — (FP16 reference) | $\mathcal{O}(N)$ (Built-in DynamicCache) |
+| **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | — (FP16) | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
+| **Phase 2** | KV-Cache Generator | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | — (FP16) | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
+| **Phase 3** | Dynamic Request Scheduler with Tensor-Batched Decode | **58.10 ms** | **N/A (Concurrent)** | **22.81 tok/s** | **2.96 GB** | — (FP16) | Batched CUDA Decode (16-req wave) |
+| **Phase 4** | INT8 Quantized Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | **+0.019 ppl (+0.52%)** — NEGLIGIBLE | 8-Bit Weight Quantization (-42.1% VRAM) |
+| **Phase 5** | vLLM (PagedAttention Engine via WSL2) | **N/A (Wave)** | **N/A (Concurrent)** | **702.20 tok/s** | **2.98 GB** | — (FP16) | PagedAttention Block Allocator + CUDA Graphs |
 
 ---
 
@@ -32,6 +32,14 @@
 ### 3. Naive (Phase 1) vs HF Baseline (Phase 0) TTFT Delta
 - **Observed Result:** Phase 1 naive single-token forward pass TTFT (**59.24 ms**) is slightly higher than or close to Phase 0 HuggingFace baseline TTFT (**58.83 ms**).
 - **Likely Mechanism:** HuggingFace `.generate()` executes additional Python framework logic before and during the first token pass (GenerationConfig validation, LogitsProcessor pipeline setup, stopping criteria wrappers), whereas Phase 1 executes a direct, raw PyTorch `model(input_ids)` forward pass.
+
+### 4. INT8 Quantization (Phase 4) Accuracy / Perplexity Impact
+- **Measured Result:** Sliding-window perplexity on a held-out 321-token Wikipedia corpus (General Relativity article, CC BY-SA 3.0) gives:
+  - **FP16 Perplexity: 3.6960** | **INT8 Perplexity: 3.7150** | **Delta: +0.0191 (+0.52%)**
+- **Verdict: NEGLIGIBLE** — the INT8 weight quantization degrades perplexity by less than 0.02 absolute points on this out-of-distribution factual corpus.
+- **Mechanistic Explanation:** `bitsandbytes` `LLM.int8()` uses a mixed-precision strategy that preserves outlier-dominated feature channels in FP16 while quantizing the bulk of weight values to INT8 (threshold = 6.0 σ). For Qwen2.5-1.5B, the outlier features that drive token probability sharpness are small in number and preserved at full precision, preventing meaningful perplexity degradation despite 42.1% VRAM reduction.
+- **Honest Caveat:** This perplexity was measured on a single 321-token English Wikipedia passage. Perplexity is a log-space average and is not sensitive to rare individual token errors. More adversarial evaluations (code generation accuracy, factual QA exact-match) could surface subtle quality regressions not visible in perplexity. The result does establish that the quantization is not catastrophically broken, which is the primary correctness claim.
+- **Script:** `python benchmarks/quant_accuracy.py` | **Output:** `benchmarks/results/phase4_accuracy.json`
 
 ---
 

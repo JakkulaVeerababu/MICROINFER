@@ -29,14 +29,14 @@
 
 ## Master Performance Matrix (RTX 4050 6GB)
 
-| Phase | Serving System & Architecture | TTFT (1st Token) | TPOT (Decode Speed) | Aggregate Throughput | Peak VRAM | Complexity Scaling |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | $\mathcal{O}(N)$ (HF DynamicCache) |
-| **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
-| **Phase 2** | KV-Cache Generator Engine | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
-| **Phase 3** | Dynamic Request Scheduler with Tensor-Batched Decode | **58.10 ms** | **N/A (Concurrent)** | **22.81 tok/s** | **2.96 GB** | Batched CUDA Decode (16-req wave) |
-| **Phase 4** | INT8 Quantized Model Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | 8-Bit Weights (-42.1% VRAM) |
-| **Phase 5** | vLLM (PagedAttention Engine via WSL2) | **N/A (Batched)** | **N/A (Batched)** | **702.20 tok/s** | **2.98 GB** | PagedAttention Block Allocator + CUDA Graphs (16-req wave) |
+| Phase | Serving System & Architecture | TTFT (1st Token) | TPOT (Decode Speed) | Aggregate Throughput | Peak VRAM | Accuracy Impact | Complexity Scaling |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Phase 0** | HuggingFace `.generate()` Baseline | **58.83 ms** | **49.67 ms/tok** | **20.15 tok/s** | **2.89 GB** | — (FP16 ref) | $\mathcal{O}(N)$ (HF DynamicCache) |
+| **Phase 1** | Naive Generator (No Cache) | **59.24 ms** | **69.52 ms/tok** | **15.65 tok/s** | **2.94 GB** | — (FP16) | $\mathcal{O}(N^2)$ Quadratic Slowdown [^1] |
+| **Phase 2** | KV-Cache Generator Engine | **53.76 ms** | **46.76 ms/tok** | **21.30 tok/s** | **2.90 GB** | — (FP16) | $\mathcal{O}(N)$ Linear ($\mathcal{O}(1)$ Decode Step) |
+| **Phase 3** | Dynamic Request Scheduler with Tensor-Batched Decode | **58.10 ms** | **N/A (Concurrent)** | **22.81 tok/s** | **2.96 GB** | — (FP16) | Batched CUDA Decode (16-req wave) |
+| **Phase 4** | INT8 Quantized Model Engine | **337.16 ms** | **272.82 ms/tok** | **3.68 tok/s** | **1.68 GB** | **+0.019 ppl (+0.52%) — NEGLIGIBLE** | 8-Bit Weights (-42.1% VRAM) |
+| **Phase 5** | vLLM (PagedAttention Engine via WSL2) | **N/A (Batched)** | **N/A (Batched)** | **702.20 tok/s** | **2.98 GB** | — (FP16) | PagedAttention Block Allocator + CUDA Graphs (16-req wave) |
 
 [^1]: Master table reported at canonical $N=64$. Across sequence length scaling $N \in \{64, 256, 512, 1024, 2048\}$, uncached Naive TPOT scales from **57.12 ms/tok** at $N=64$ $\rightarrow$ **63.53 ms/tok** (+11.2% at $N=256$) $\rightarrow$ **70.18 ms/tok** (+10.5% at $N=512$) $\rightarrow$ **83.45 ms/tok** (+18.9% at $N=1024$) $\rightarrow$ **110.12 ms/tok** (+32.0% at $N=2048$, a **+92.8% total decode slowdown**). In contrast, HF cached TPOT remains nearly flat (**50.18 ms/tok** to **55.04 ms/tok**, +9.7% total growth). At smaller sequence lengths ($N \le 256$), the $\mathcal{O}(N^2)$ quadratic attention gap is modest because fixed per-token FFN parameter projection cost (~1.5B weights) dominates GPU execution time per step. See `analysis/plots/phase1_scaling_crossover.png`.
 
@@ -44,6 +44,7 @@
 > - **KV-Caching Speedup:** Achieved **+36.1% generation throughput boost** over uncached naive generation (21.30 tok/s vs 15.65 tok/s) and reduced per-step decoding latency from 69.52 ms/tok down to a flat constant **46.76 ms/token**.
 > - **Continuous Batching Gain:** True CUDA tensor-level batched decode pass increased concurrent throughput from **19.15 tok/s to 22.81 tok/s (+19.1% throughput improvement)** and cut 16-request wave wall-clock latency from **81.36s down to 44.89s (-44.8% wave time reduction)**, successfully surpassing Phase 2's single-stream throughput (22.81 tok/s vs 21.30 tok/s).
 > - **INT8 VRAM Savings:** Reduced GPU memory allocation from **2.90 GB down to 1.68 GB** (**-42.1% GPU memory savings**).
+> - **INT8 Accuracy (Perplexity):** Measured sliding-window perplexity on a held-out 321-token Wikipedia corpus. **FP16: 3.696** → **INT8: 3.715** → **Delta: +0.019 ppl (+0.52%)** — classified as **NEGLIGIBLE**. The `bitsandbytes` mixed-precision strategy (outlier channels kept in FP16, threshold=6σ) prevents meaningful accuracy regression while achieving the full VRAM savings.
 > - **Industrial Baseline (vLLM PagedAttention):** Benchmarked vLLM v0.26.0 inside **WSL2 Ubuntu** on the same RTX 4050 6GB GPU, achieving **702.20 tok/sec aggregate throughput** (16-request wave wall-clock time: **1.49s**), illustrating the throughput advantage of C++ PagedAttention block allocation, FlashAttention v2, and CUDA Graph capture over Python-level tensor batching.
 
 > [!NOTE]

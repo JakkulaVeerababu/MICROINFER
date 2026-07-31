@@ -1,0 +1,21 @@
+{
+  "phase": "Phase 4 - INT8 Accuracy Evaluation",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "device": "cuda",
+  "gpu_name": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "eval_method": "sliding_window_perplexity",
+  "corpus_description": "Wikipedia: General Relativity excerpt (CC BY-SA 3.0)",
+  "corpus_tokens": 321,
+  "stride": 256,
+  "window": 512,
+  "fp16_perplexity": 3.696,
+  "int8_perplexity": 3.715,
+  "perplexity_delta_abs": 0.0191,
+  "perplexity_delta_pct": 0.52,
+  "verdict": "negligible",
+  "verdict_thresholds": {
+    "negligible": "delta_abs < 2.0",
+    "moderate": "2.0 <= delta_abs < 10.0",
+    "significant": "delta_abs >= 10.0"
+  }
+}

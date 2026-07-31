@@ -27,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.model_loader import DEFAULT_MODEL_ID
 from src.quant_loader import load_quantized_model_and_tokenizer
 from src.quant_generate import quant_generate
+from benchmarks.quant_accuracy import run_accuracy_eval
 
 # ---------------------------------------------------------------------------
 # Canonical benchmark constants -- identical across all six phase harnesses
@@ -188,6 +189,18 @@ def run_quant_benchmark(
 
     print(f"\n[MicroInfer] Phase 4 results -> '{output_dir / 'phase4_quant.json'}'")
     print(f"[MicroInfer] Phase 4 raw log -> '{output_dir / 'phase4_raw.json'}'")
+
+    # --- Accuracy evaluation (perplexity) ---
+    print("\n" + "-" * 60)
+    print("[MicroInfer] Running Phase 4 accuracy evaluation (perplexity)...")
+    print("-" * 60)
+    accuracy_result = run_accuracy_eval(model_id=model_id)
+    export_data["accuracy"] = accuracy_result
+    # Update phase4_quant.json with accuracy data
+    with open(output_dir / "phase4_quant.json", "w") as f:
+        json.dump(export_data, f, indent=2)
+    print("[MicroInfer] Phase 4 accuracy merged into phase4_quant.json")
+
     return export_data
 
 
