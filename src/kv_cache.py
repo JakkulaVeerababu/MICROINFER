@@ -7,7 +7,13 @@ while pre-allocating contiguous 5D CUDA tensors up front.
 
 import torch
 from typing import Tuple, Optional, Any
-from transformers.cache_utils import Cache, CacheLayerMixin
+try:
+    from transformers.cache_utils import Cache, CacheLayerMixin
+except ImportError:
+    from transformers.cache_utils import Cache
+    class CacheLayerMixin:
+        """Fallback mixin for transformers versions without CacheLayerMixin."""
+        pass
 
 
 class KVCacheLayer(CacheLayerMixin):
