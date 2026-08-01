@@ -1,0 +1,178 @@
+{
+  "benchmark": "Phase 2 vs Phase 1 Scaling Sweep",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "seq_lengths": [
+    64,
+    256,
+    512,
+    1024,
+    2048
+  ],
+  "gen_tokens": 32,
+  "num_warmup": 3,
+  "num_timed": 5,
+  "crossover_n": 64,
+  "results": [
+    {
+      "n": 64,
+      "actual_prompt_tokens": 64,
+      "phase1_naive": {
+        "tpot_ms_mean": 87.15,
+        "tpot_ms_std": 18.163,
+        "throughput_mean": 11.85,
+        "throughput_std": 2.613,
+        "raw_tpots": [
+          111.14,
+          89.57,
+          94.59,
+          77.64,
+          62.81
+        ]
+      },
+      "phase2_cached": {
+        "tpot_ms_mean": 62.716,
+        "tpot_ms_std": 0.561,
+        "throughput_mean": 15.792,
+        "throughput_std": 0.242,
+        "raw_tpots": [
+          63.49,
+          62.31,
+          62.57,
+          62.13,
+          63.08
+        ]
+      },
+      "delta_throughput_pct": 33.27,
+      "winner": "Phase2"
+    },
+    {
+      "n": 256,
+      "actual_prompt_tokens": 256,
+      "phase1_naive": {
+        "tpot_ms_mean": 78.602,
+        "tpot_ms_std": 7.299,
+        "throughput_mean": 12.812,
+        "throughput_std": 1.236,
+        "raw_tpots": [
+          83.14,
+          83.08,
+          85.44,
+          70.6,
+          70.75
+        ]
+      },
+      "phase2_cached": {
+        "tpot_ms_mean": 64.198,
+        "tpot_ms_std": 2.096,
+        "throughput_mean": 15.452,
+        "throughput_std": 0.503,
+        "raw_tpots": [
+          62.27,
+          63.26,
+          62.65,
+          67.05,
+          65.76
+        ]
+      },
+      "delta_throughput_pct": 20.61,
+      "winner": "Phase2"
+    },
+    {
+      "n": 512,
+      "actual_prompt_tokens": 512,
+      "phase1_naive": {
+        "tpot_ms_mean": 114.514,
+        "tpot_ms_std": 13.056,
+        "throughput_mean": 8.868,
+        "throughput_std": 0.912,
+        "raw_tpots": [
+          135.67,
+          104.4,
+          108.77,
+          118.38,
+          105.35
+        ]
+      },
+      "phase2_cached": {
+        "tpot_ms_mean": 71.222,
+        "tpot_ms_std": 13.878,
+        "throughput_mean": 14.27,
+        "throughput_std": 2.91,
+        "raw_tpots": [
+          77.23,
+          74.31,
+          52.36,
+          63.43,
+          88.78
+        ]
+      },
+      "delta_throughput_pct": 60.92,
+      "winner": "Phase2"
+    },
+    {
+      "n": 1024,
+      "actual_prompt_tokens": 1024,
+      "phase1_naive": {
+        "tpot_ms_mean": 247.838,
+        "tpot_ms_std": 15.941,
+        "throughput_mean": 4.066,
+        "throughput_std": 0.257,
+        "raw_tpots": [
+          239.88,
+          229.37,
+          269.07,
+          259.03,
+          241.84
+        ]
+      },
+      "phase2_cached": {
+        "tpot_ms_mean": 77.316,
+        "tpot_ms_std": 8.107,
+        "throughput_mean": 12.276,
+        "throughput_std": 1.231,
+        "raw_tpots": [
+          84.67,
+          75.67,
+          65.97,
+          74.59,
+          85.68
+        ]
+      },
+      "delta_throughput_pct": 201.92,
+      "winner": "Phase2"
+    },
+    {
+      "n": 2048,
+      "actual_prompt_tokens": 2048,
+      "phase1_naive": {
+        "tpot_ms_mean": 500.212,
+        "tpot_ms_std": 193.469,
+        "throughput_mean": 2.182,
+        "throughput_std": 0.549,
+        "raw_tpots": [
+          846.29,
+          415.33,
+          414.67,
+          411.58,
+          413.19
+        ]
+      },
+      "phase2_cached": {
+        "tpot_ms_mean": 79.61,
+        "tpot_ms_std": 10.506,
+        "throughput_mean": 11.368,
+        "throughput_std": 1.267,
+        "raw_tpots": [
+          92.82,
+          68.9,
+          77.94,
+          70.56,
+          87.83
+        ]
+      },
+      "delta_throughput_pct": 420.99,
+      "winner": "Phase2"
+    }
+  ]
+}

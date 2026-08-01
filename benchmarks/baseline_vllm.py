@@ -122,137 +122,20 @@ def _run_vllm(model_id, max_new_tokens, num_warmup, concurrent_requests, num_wav
     return wave_results, all_raw_requests, "vLLM (PagedAttention)"
 
 
-# ---------------------------------------------------------------------------
-# Fallback path: MicroInfer ContinuousBatchScheduler under concurrent load
-# ---------------------------------------------------------------------------
-def _run_fallback(model, tokenizer, device, max_new_tokens,
-                  num_warmup, concurrent_requests, num_waves):
-    from src.scheduler import ContinuousBatchScheduler
-
-    def drain_wave(n):
-        scheduler = ContinuousBatchScheduler(max_batch_size=n, device=device)
-        for i in range(n):
-            prompt = BENCHMARK_PROMPTS[i % len(BENCHMARK_PROMPTS)]
-            scheduler.add_request(prompt, tokenizer,
-                                  max_new_tokens=max_new_tokens, temperature=0.0)
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-        t0 = time.perf_counter()
-        while scheduler.has_pending_work():
-            scheduler.step(model, tokenizer)
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-        wall_s = time.perf_counter() - t0
-        return scheduler.finished_sequences, wall_s
-
-    print(f"[Fallback] Running {num_warmup} warm-up waves (discarded)...")
-    for _ in range(num_warmup):
-        drain_wave(min(4, concurrent_requests))
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-    if torch.cuda.is_available():
-        torch.cuda.reset_peak_memory_stats()
-    print("[Fallback] Warm-up complete.\n")
-
-    wave_results     = []
-    all_raw_requests = []
-
-    for wave_idx in range(num_waves):
-        print(f"[Wave {wave_idx + 1}/{num_waves}] Firing {concurrent_requests} simultaneous requests...")
-        seqs, wall_s = drain_wave(concurrent_requests)
-        total_tokens = sum(len(s.generated_tokens) for s in seqs)
-        aggregate_tp = total_tokens / wall_s if wall_s > 0 else 0.0
-        latencies    = [s.total_time_ms for s in seqs]
-        ttfts        = [s.ttft_ms for s in seqs]
-
-        for s in seqs:
-            all_raw_requests.append({
-                "wave":             wave_idx + 1,
-                "seq_id":           s.seq_id,
-                "prompt":           s.prompt,
-                "input_tokens":     len(s.prompt_tokens),
-                "generated_tokens": len(s.generated_tokens),
-                "ttft_ms":          round(s.ttft_ms, 2),
-                "total_latency_ms": round(s.total_time_ms, 2),
-            })
-
-        ttft_stats = compute_stats(ttfts)
-        lat_stats = compute_stats(latencies)
-
-        wave_results.append({
-            "n_completed":          len(seqs),
-            "total_tokens":         total_tokens,
-            "wall_time_s":          wall_s,
-            "aggregate_throughput": aggregate_tp,
-            "mean_ttft_ms":         ttft_stats["mean"],
-            "p50_ttft_ms":          ttft_stats["p50"],
-            "p99_ttft_ms":          ttft_stats["p99"],
-            "mean_latency_ms":      lat_stats["mean"],
-            "p50_latency_ms":       lat_stats["p50"],
-            "p99_latency_ms":       lat_stats["p99"],
-        })
-        w = wave_results[-1]
-        print(f"  Completed    : {w['n_completed']} requests")
-        print(f"  Total tokens : {w['total_tokens']}")
-        print(f"  Wall time    : {w['wall_time_s']:.2f} s")
-        print(f"  Throughput   : {w['aggregate_throughput']:.2f} tokens/sec")
-        print(f"  TTFT         : mean={w['mean_ttft_ms']:.1f}ms  "
-              f"p50={w['p50_ttft_ms']:.1f}ms  p99={w['p99_ttft_ms']:.1f}ms")
-        print(f"  Req latency  : mean={w['mean_latency_ms']:.1f}ms  "
-              f"p50={w['p50_latency_ms']:.1f}ms  p99={w['p99_latency_ms']:.1f}ms\n")
-
-    return wave_results, all_raw_requests, "fallback-scheduler (vLLM unavailable: Windows — _C_stable_libtorch missing)"
-
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-def run_vllm_benchmark(
-    model_id: str = DEFAULT_MODEL_ID,
-    max_new_tokens: int = MAX_NEW_TOKENS,
-    num_warmup: int = NUM_WARMUP_RUNS,
-    num_timed: int = NUM_TIMED_RUNS,
-    concurrent_requests: int = CONCURRENT_REQUESTS,
-    num_waves: int = NUM_WAVES,
-    num_runs: int = None,   # backward-compat alias (maps to num_waves for this phase)
-):
-    # Resolve backward-compat alias: tests pass num_runs=1
-    if num_runs is not None:
-        num_waves = max(1, num_runs)
-        concurrent_requests = 2   # keep it fast for test runs
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    vllm_available = False
-    try:
-        import vllm  # type: ignore  # noqa: F401
-        vllm_available = True
-    except ImportError:
-        pass
-
-    print("\n" + "=" * 60)
-    print("  MICROINFER PHASE 5: PRODUCTION REFERENCE BENCHMARK")
-    print(f"  Model               : {model_id}")
-    print(f"  Device              : {device.upper()} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
-    print(f"  Max Tokens          : {max_new_tokens}")
-    print(f"  vLLM Available      : {vllm_available}")
-    print(f"  Concurrent Requests : {concurrent_requests} per wave")
-    print(f"  Warm-up             : {num_warmup} discarded")
-    print(f"  Timed Waves         : {num_waves}")
-    print("=" * 60 + "\n")
-    print("NOTE: No synthetic multipliers applied. All numbers are measured.")
-    print("      If vLLM is not installed, fallback uses MicroInfer scheduler")
-    print("      under the same concurrency load as Phase 3.\n")
-
     if vllm_available:
         wave_results, all_raw_requests, engine_label = _run_vllm(
             model_id, max_new_tokens, num_warmup, concurrent_requests, num_waves
         )
     else:
-        model, tokenizer = load_model_and_tokenizer(model_id=model_id, device=device)
-        model.eval()
-        wave_results, all_raw_requests, engine_label = _run_fallback(
-            model, tokenizer, device,
-            max_new_tokens, num_warmup, concurrent_requests, num_waves,
+        from benchmarks.benchmark_scheduler import run_scheduler_benchmark
+        # Literally call Phase 3's harness so they are 100% identical.
+        print("\n[Phase 5 Fallback] vLLM unavailable. Falling back to Phase 3 harness identically...")
+        return run_scheduler_benchmark(
+            model_id=model_id,
+            max_new_tokens=max_new_tokens,
+            concurrent_requests=concurrent_requests,
+            num_warmup=num_warmup,
+            num_waves=num_waves
         )
 
     # Aggregate across waves

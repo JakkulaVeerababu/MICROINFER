@@ -1,0 +1,71 @@
+MicroInfer -- Phase 2 vs Phase 1 Overhead Profiler Report
+GPU   : NVIDIA GeForce RTX 4050 Laptop GPU
+Model : Qwen/Qwen2.5-1.5B-Instruct
+Prompt tokens: 11  |  Decode steps: 64
+
+======================================================================
+THROUGHPUT COMPARISON (N=64 canonical condition)
+======================================================================
+  Phase 1 (Naive, no cache)  :   4.39 tok/s  |  TPOT = 227.67 ms/tok
+  Phase 2 (KV-Cache engine)  :   3.92 tok/s  |  TPOT = 252.43 ms/tok
+  Delta                      : -0.47 tok/s  (-10.7%)
+
+======================================================================
+PHASE 2 -- KVCACHE OVERHEAD BREAKDOWN
+======================================================================
+  Total Phase 2 CUDA self-time : 0.00 ms  over 64 tokens
+  KVCache::update CUDA time    : 0.00 ms  (0.0% of total CUDA)
+  KVCache::update CPU time     : 1270.49 ms  (7.8% of total CPU)
+  Cache overhead per step      : 0.0000 ms CUDA  |  20.1666 ms CPU
+
+======================================================================
+PHASE 1 -- NAIVE PROFILER TOTALS
+======================================================================
+  Total CUDA self-time : 0.00 ms  over 64 tokens
+  Total CPU  self-time : 14639.92 ms
+
+======================================================================
+PHASE 1 -- TOP 15 OPS BY SELF CUDA TIME
+======================================================================
+  naive_full_generation                          cuda=   0.000ms  cpu=5058.417ms  calls=1
+  aten::empty                                    cuda=   0.000ms  cpu= 74.599ms  calls=12674
+  aten::to                                       cuda=   0.000ms  cpu=208.434ms  calls=11334
+  aten::lift_fresh                               cuda=   0.000ms  cpu=  0.002ms  calls=2
+  aten::detach_                                  cuda=   0.000ms  cpu=  0.076ms  calls=2
+  detach_                                        cuda=   0.000ms  cpu=  0.005ms  calls=2
+  aten::_to_copy                                 cuda=   0.000ms  cpu=412.918ms  calls=7492
+  aten::empty_strided                            cuda=   0.000ms  cpu= 92.943ms  calls=7492
+  aten::copy_                                    cuda=   0.000ms  cpu=364.697ms  calls=12868
+  aten::embedding                                cuda=   0.000ms  cpu=  5.685ms  calls=64
+  aten::reshape                                  cuda=   0.000ms  cpu=576.623ms  calls=18176
+  aten::view                                     cuda=   0.000ms  cpu=106.450ms  calls=25408
+  aten::index_select                             cuda=   0.000ms  cpu= 11.763ms  calls=64
+  aten::resize_                                  cuda=   0.000ms  cpu=  1.197ms  calls=128
+  aten::arange                                   cuda=   0.000ms  cpu=  7.474ms  calls=128
+
+======================================================================
+PHASE 2 -- TOP 15 OPS BY SELF CUDA TIME  (* = KVCache overhead)
+======================================================================
+   cached_full_generation                         cuda=   0.000ms  cpu=5155.307ms  calls=1
+   aten::empty                                    cuda=   0.000ms  cpu= 69.007ms  calls=10912
+   aten::to                                       cuda=   0.000ms  cpu=205.167ms  calls=11332
+   aten::lift_fresh                               cuda=   0.000ms  cpu=  0.002ms  calls=2
+   aten::detach_                                  cuda=   0.000ms  cpu=  0.059ms  calls=2
+   detach_                                        cuda=   0.000ms  cpu=  0.008ms  calls=2
+   aten::_to_copy                                 cuda=   0.000ms  cpu=440.958ms  calls=7490
+   aten::empty_strided                            cuda=   0.000ms  cpu= 50.239ms  calls=7490
+   aten::copy_                                    cuda=   0.000ms  cpu=429.754ms  calls=14686
+   aten::zeros                                    cuda=   0.000ms  cpu=  0.176ms  calls=2
+   aten::zero_                                    cuda=   0.000ms  cpu=  0.081ms  calls=2
+   aten::fill_                                    cuda=   0.000ms  cpu=  0.105ms  calls=2
+   aten::select                                   cuda=   0.000ms  cpu=  3.448ms  calls=120
+   aten::as_strided                               cuda=   0.000ms  cpu=141.692ms  calls=89016
+   aten::embedding                                cuda=   0.000ms  cpu=  6.182ms  calls=64
+
+======================================================================
+DIAGNOSIS
+======================================================================
+  Phase 2 is 10.7% SLOWER than Phase 1 at N=64.
+  Root cause: KVCache Python dispatch overhead (20.1666 ms/step CPU, 0.0000 ms/step CUDA)
+  adds to identical FFN compute cost; attention savings at N=64 are smaller than this overhead.
+  KV-caching advantage emerges at longer N -- see benchmark_p2_vs_p1_scaling.py for crossover.

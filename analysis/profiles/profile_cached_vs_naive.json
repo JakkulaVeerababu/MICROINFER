@@ -1,0 +1,242 @@
+{
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "prompt_tokens": 11,
+  "decode_steps": 64,
+  "phase1_naive": {
+    "throughput_tok_per_sec": 4.39,
+    "tpot_ms": 227.67,
+    "total_cuda_ms": 0.0,
+    "total_cpu_ms": 14639.915,
+    "top_ops": [
+      {
+        "op": "naive_full_generation",
+        "calls": 1,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 5058.417,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::empty",
+        "calls": 12674,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 74.599,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::to",
+        "calls": 11334,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 208.434,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::lift_fresh",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.002,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::detach_",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.076,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "detach_",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.005,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::_to_copy",
+        "calls": 7492,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 412.918,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::empty_strided",
+        "calls": 7492,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 92.943,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::copy_",
+        "calls": 12868,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 364.697,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::embedding",
+        "calls": 64,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 5.685,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::reshape",
+        "calls": 18176,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 576.623,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::view",
+        "calls": 25408,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 106.45,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::index_select",
+        "calls": 64,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 11.763,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::resize_",
+        "calls": 128,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 1.197,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::arange",
+        "calls": 128,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 7.474,
+        "cuda_time_total_ms": 0.0
+      }
+    ]
+  },
+  "phase2_cached": {
+    "throughput_tok_per_sec": 3.92,
+    "tpot_ms": 252.43,
+    "total_cuda_ms": 0.0,
+    "total_cpu_ms": 16353.18,
+    "kvcache_overhead": {
+      "cuda_total_ms": 0.0,
+      "cpu_total_ms": 1270.494,
+      "cuda_pct": 0.0,
+      "cpu_pct": 7.77,
+      "cuda_per_step_ms": 0.0,
+      "cpu_per_step_ms": 20.1666
+    },
+    "top_ops": [
+      {
+        "op": "cached_full_generation",
+        "calls": 1,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 5155.307,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::empty",
+        "calls": 10912,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 69.007,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::to",
+        "calls": 11332,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 205.167,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::lift_fresh",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.002,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::detach_",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.059,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "detach_",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.008,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::_to_copy",
+        "calls": 7490,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 440.958,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::empty_strided",
+        "calls": 7490,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 50.239,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::copy_",
+        "calls": 14686,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 429.754,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::zeros",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.176,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::zero_",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.081,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::fill_",
+        "calls": 2,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 0.105,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::select",
+        "calls": 120,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 3.448,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::as_strided",
+        "calls": 89016,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 141.692,
+        "cuda_time_total_ms": 0.0
+      },
+      {
+        "op": "aten::embedding",
+        "calls": 64,
+        "self_cuda_ms": 0.0,
+        "self_cpu_ms": 6.182,
+        "cuda_time_total_ms": 0.0
+      }
+    ]
+  },
+  "delta_tok_per_sec": -0.47,
+  "delta_pct": -10.71
+}

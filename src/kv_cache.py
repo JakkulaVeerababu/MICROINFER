@@ -6,6 +6,7 @@ while pre-allocating contiguous 5D CUDA tensors up front.
 """
 
 import torch
+from torch.profiler import record_function
 from typing import Tuple, Optional, Any
 try:
     from transformers.cache_utils import Cache, CacheLayerMixin
@@ -36,23 +37,24 @@ class KVCacheLayer(CacheLayerMixin):
     def update(
         self, key_states: torch.Tensor, value_states: torch.Tensor, *args, **kwargs
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        num_new_tokens = key_states.shape[2]
-        start_pos = self._seq_len
-        end_pos = start_pos + num_new_tokens
+        with record_function("KVCacheLayer::update"):
+            num_new_tokens = key_states.shape[2]
+            start_pos = self._seq_len
+            end_pos = start_pos + num_new_tokens
 
-        max_len = self.k_slice.shape[2]
-        if end_pos > max_len:
-            raise ValueError(
-                f"Exceeded max sequence length capacity! "
-                f"Current len ({self._seq_len}) + new tokens ({num_new_tokens}) > max_seq_len ({max_len})"
-            )
+            max_len = self.k_slice.shape[2]
+            if end_pos > max_len:
+                raise ValueError(
+                    f"Exceeded max sequence length capacity! "
+                    f"Current len ({self._seq_len}) + new tokens ({num_new_tokens}) > max_seq_len ({max_len})"
+                )
 
-        self.k_slice[:, :, start_pos:end_pos, :] = key_states
-        self.v_slice[:, :, start_pos:end_pos, :] = value_states
-        self._seq_len = end_pos
-        self._last_updated_len = end_pos
+            self.k_slice[:, :, start_pos:end_pos, :] = key_states
+            self.v_slice[:, :, start_pos:end_pos, :] = value_states
+            self._seq_len = end_pos
+            self._last_updated_len = end_pos
 
-        return self.k_slice[:, :, :end_pos, :], self.v_slice[:, :, :end_pos, :]
+            return self.k_slice[:, :, :end_pos, :], self.v_slice[:, :, :end_pos, :]
 
     def get_mask_sizes(self, query_length: int) -> Tuple[int, int]:
         return self._seq_len + query_length, 0
@@ -130,41 +132,50 @@ class KVCache(Cache):
 
     def update(
         self,
-        first_arg: Any = None,
-        second_arg: Any = None,
-        third_arg: Any = None,
-        layer_idx: Optional[int] = None,
-        new_k: Optional[torch.Tensor] = None,
-        new_v: Optional[torch.Tensor] = None,
-        key_states: Optional[torch.Tensor] = None,
-        value_states: Optional[torch.Tensor] = None,
-        *args,
+        key_states: Any = None,
+        value_states: Any = None,
+        layer_idx: Any = None,
+        cache_kwargs: Any = None,
         **kwargs,
     ) -> Optional[Tuple[torch.Tensor, torch.Tensor]]:
         """
-        Supports both:
-        1. Legacy MicroInfer signature: update(layer_idx=0, new_k=k, new_v=v) or update(0, k, v)
-        2. HuggingFace Cache signature: update(key_states, value_states, layer_idx) or update(key_states=k, value_states=v, layer_idx=0)
+        Supports two call patterns:
+
+        1. HuggingFace Cache protocol (primary, called 28× per decode step by the model):
+               update(key_states, value_states, layer_idx, ...)
+           where key_states and value_states are CUDA tensors and layer_idx is an int.
+
+        2. Legacy MicroInfer direct-call signature (used in tests and diagnostics):
+               update(layer_idx=0, new_k=k, new_v=v)
+           Both keyword arguments are forwarded through **kwargs and handled below.
         """
-        if isinstance(first_arg, int):
-            # Legacy signature: update(layer_idx, new_k, new_v)
-            idx = first_arg
-            k_tensor = second_arg
-            v_tensor = third_arg
-        elif torch.is_tensor(first_arg) and torch.is_tensor(second_arg):
-            # HF positional signature: update(key_states, value_states, layer_idx, ...)
-            k_tensor = first_arg
-            v_tensor = second_arg
-            idx = third_arg if isinstance(third_arg, int) else (layer_idx if layer_idx is not None else 0)
-        else:
-            # Keyword signature: update(key_states=..., value_states=..., layer_idx=...) or update(new_k=..., new_v=..., layer_idx=...)
-            k_tensor = key_states if key_states is not None else new_k
-            v_tensor = value_states if value_states is not None else new_v
-            idx = layer_idx if layer_idx is not None else (third_arg if isinstance(third_arg, int) else 0)
+        with record_function("KVCache::update"):
+            # ---- Fast path: HF positional protocol (tensor, tensor, int) ----
+            if torch.is_tensor(key_states) and torch.is_tensor(value_states):
+                idx = layer_idx if isinstance(layer_idx, int) else 0
+                return self.layers[idx].update(key_states, value_states)
 
-        return self.layers[idx].update(k_tensor, v_tensor, *args, **kwargs)
+            # ---- Legacy keyword path: update(layer_idx=N, new_k=k, new_v=v) ----
+            new_k = kwargs.get("new_k", None)
+            new_v = kwargs.get("new_v", None)
+            kw_key = kwargs.get("key_states", None)
+            kw_val = kwargs.get("value_states", None)
 
-        raise ValueError(f"Invalid parameters to KVCache.update: first_arg={type(first_arg)}, layer_idx={layer_idx}")
+            k_tensor = kw_key if kw_key is not None else new_k
+            v_tensor = kw_val if kw_val is not None else new_v
+
+            # Resolve layer index: first check positional layer_idx, then kwargs
+            if isinstance(layer_idx, int):
+                idx = layer_idx
+            elif isinstance(key_states, int):
+                # Positional legacy: update(layer_idx, new_k, new_v) with all positional
+                idx = key_states
+                k_tensor = value_states
+                v_tensor = layer_idx if isinstance(layer_idx, torch.Tensor) else k_tensor
+            else:
+                idx = kwargs.get("layer_idx", 0)
+
+            return self.layers[idx].update(k_tensor, v_tensor)
 
     def get(self, layer_idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
